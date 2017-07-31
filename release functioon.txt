@@ -1,0 +1,62 @@
+Ready	extern int wiringPiFailure (int fatal, const char *message, ...) ;	
+Ready	extern int  wiringPiSetup       (void) ;	
+Ready	extern int  wiringPiSetupSys    (void) ;	
+Ready	extern int  wiringPiSetupGpio   (void) ;	
+Ready	extern int  wiringPiSetupPhys   (void) ;	
+		
+N/A	extern void pinModeAlt          (int pin, int mode) ;	
+Ready	extern void pinMode             (int pin, int mode) ;	
+Ready	extern void pullUpDnControl     (int pin, int pud) ;	
+Ready	extern int  digitalRead         (int pin) ;	
+Ready	extern void digitalWrite        (int pin, int value) ;	
+Ready	extern void pwmWrite            (int pin, int value) ;	
+Ready	void asus_pwm_start(int pwm_ch,int mode,int range,int duty);
+Ready	extern int  analogRead          (int pin) ;	 * analogRead: Read the analog value of a given Pin. There is no on-board Pi analog hardware, so this needs to go to a new node.
+Ready	extern void analogWrite         (int pin, int value) ;	 * analogWrite: Write the analog value to the given Pin. There is no on-board Pi analog hardware, so this needs to go to a new node.
+		
+	// PiFace specifics	
+	//      (Deprecated)	
+		
+N/A	extern int  wiringPiSetupPiFace (void) ;	N/A in Pi
+N/A	extern int  wiringPiSetupPiFaceForGpioProg (void) ;     // Don't use this - for gpio program only	N/A in Pi
+		
+	// On-Board Raspberry Pi hardware specific stuff	
+		
+Ready	extern int  piBoardRev          (void) ;	
+Ready	extern void piBoardId           (int *model, int *rev, int *mem, int *maker, int *overVolted) ;	
+Ready	extern int  wpiPinToGpio        (int wpiPin) ;	
+Ready	extern int  physPinToGpio       (int physPin) ;	
+N/A	extern void setPadDrive         (int group, int value) ;	
+Ready	extern int  getAlt              (int pin) ;	
+Ready	extern int  getPinMode (int pin) ;
+Ready	extern void pwmToneWrite        (int pin, int freq) ;	
+Ready	extern void digitalWriteByte    (int value) ;	
+N/A	extern void pwmSetMode          (int mode) ;	only Mark:space mode
+Ready	extern void pwmSetRange         (unsigned int range) ;
+Ready	void asus_pwm_set_period(int pwm_ch,int range)
+Ready	extern void pwmSetClock         (int divisor) ;
+Ready	void asus_pwm_set_duty(int pwm_ch,int duty)
+Ready	extern void gpioClockSet        (int pin, int freq) ;	
+		
+	// Interrupts	
+	//      (Also Pi hardware specific)	
+		
+Ready	extern int  waitForInterrupt    (int pin, int mS) ;	
+Ready	extern int  wiringPiISR         (int pin, int mode, void (*function)(void)) ;	
+		
+	// Threads	
+		
+Ready	extern int  piThreadCreate      (void *(*fn)(void *)) ;	
+Ready	extern void piLock              (int key) ;	
+Ready	extern void piUnlock            (int key) ;	
+		
+	// Schedulling priority	
+		
+N/A	extern int piHiPri (const int pri) ;	
+		
+	// Extras from arduino land	
+		
+Ready	extern void         delay             (unsigned int howLong) ;	
+Ready	extern void         delayMicroseconds (unsigned int howLong) ;	
+Ready	extern unsigned int millis            (void) ;	
+Ready	extern unsigned int micros            (void) ;	
