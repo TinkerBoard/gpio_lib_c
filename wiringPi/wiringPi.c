@@ -1259,14 +1259,14 @@ int asus_get_pin_mode(int pin)
     {
       if(pin>=24)
       {
-        if (*(gpio0[(pin+8)/32]+GPIO_SWPORTA_DDR_OFFSET/4) && 1<<((pin+8)%32))
+        if (*(gpio0[(pin+8)/32]+GPIO_SWPORTA_DDR_OFFSET/4) & 1<<((pin+8)%32))
           func = GPIOOUT;
         else
           func = GPIOIN;
       }
       else
       {
-        if (*(gpio0[pin/32]+GPIO_SWPORTA_DDR_OFFSET/4) && 1<<(pin%32))
+        if (*(gpio0[pin/32]+GPIO_SWPORTA_DDR_OFFSET/4) & 1<<(pin%32))
           func = GPIOOUT;
         else
           func = GPIOIN;
