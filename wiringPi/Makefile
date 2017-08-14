@@ -46,6 +46,7 @@ LIBS    =
 ###############################################################################
 
 SRC	=	wiringPi.c						\
+		wiringTB.c						\
 		wiringSerial.c wiringShift.c				\
 		piHiPri.c piThread.c					\
 		wiringPiSPI.c wiringPiI2C.c				\
@@ -61,6 +62,7 @@ SRC	=	wiringPi.c						\
 		wpiExtensions.c
 
 HEADERS =	wiringPi.h						\
+		wiringTB.h RKIO.h							\
 		wiringSerial.h wiringShift.h				\
 		wiringPiSPI.h wiringPiI2C.h				\
 		softPwm.h softTone.h					\
