@@ -640,24 +640,19 @@ static uint8_t gpioToClkDiv [] =
  *********************************************************************************
  */
 //jason add for asuspi
-static int  mem_fd0;
+static int  mem_fd;
 static void* gpio_map0[9];
 static volatile unsigned* gpio0[9];
 
-
-static int  mem_fd4;
 static void *grf_map;
 static volatile unsigned *grf;
 
-static int  mem_fdp;
 static void *pwm_map;
 static volatile unsigned *pwm;
 
-static int  mem_fdpmu;
 static void *pmu_map;
 static volatile unsigned *pmu;
 
-static int  mem_fdcru;
 static void *cru_map;
 static volatile unsigned *cru;
 
@@ -3096,234 +3091,166 @@ unsigned int micros (void)
 
 int wiringPiSetup (void)
 {
-  int   fd ;
-  int   boardRev ;
-  int   model, rev, mem, maker, overVolted ;
-   int i;
-
-  if (getenv (ENV_DEBUG) != NULL)
-    wiringPiDebug = TRUE ;
-
-  if (getenv (ENV_CODES) != NULL)
-    wiringPiReturnCodes = TRUE ;
-
-  if (getenv (ENV_GPIOMEM) != NULL)
-    wiringPiTryGpioMem = TRUE ;
-
-  if (wiringPiDebug)
-  {
-    printf ("wiringPi: wiringPiSetup called\n") ;
-    if (wiringPiTryGpioMem)
-      printf ("wiringPi: Using /dev/gpiomem\n") ;
-  }
-
-  boardRev = piBoardRev () ;
-
-  /**/ if (boardRev == ASUSVER)	// A, B, Rev 2, B+, CM, Pi2
-  {
-  	pinToGpio =  pinToGpio_AP ;
-    physToGpio = physToGpio_AP ;
-     
-  }
-  else 				// A, B, Rev 1, 1.1 
-  {
-     
-	pinToGpio =  pinToGpioR1 ;
-    physToGpio = physToGpioR1 ;
-  }
-
-  
-
-// Open the master /dev/ memory control device
-// Open the master /dev/memory device
-   if ((fd = open ("/dev/mem", O_RDWR | O_SYNC | O_CLOEXEC) ) < 0)
-   return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
-
-  if(boardRev == ASUSVER)
-  {
-		
-
-	//printf("setup\n");
-    	for(i=0;i<9;i++)
-    	{
-		if ((mem_fd0 = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) 
-		{
-         	  	printf("can't open /dev/mem \n");
-       	       	  	return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
-      		}
-
-        // mmap GPIO 
-        	gpio_map0[i] = mmap(
-                	NULL,             // Any adddress in our space will do 
-                	PAGE_SIZE,       // Map length 
-               	 	PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory 
-                	MAP_SHARED,       // Shared with other processes 
-                	mem_fd0,           // File to map 
-                	RK3288_GPIO(i)         //Offset to GPIO peripheral 
-               		);
+	int   fd ;
+	int   boardRev ;
+	int   model, rev, mem, maker, overVolted ;
+	int i;
+	if (getenv (ENV_DEBUG) != NULL)
+		wiringPiDebug = TRUE ;
+	if (getenv (ENV_CODES) != NULL)
+		wiringPiReturnCodes = TRUE ;
+	if (getenv (ENV_GPIOMEM) != NULL)
+		wiringPiTryGpioMem = TRUE ;
+	if (wiringPiDebug)
+	{
+		printf ("wiringPi: wiringPiSetup called\n") ;
+		if (wiringPiTryGpioMem)
+			printf ("wiringPi: Using /dev/gpiomem\n") ;
+	}
+	boardRev = piBoardRev () ;
+	if (boardRev == ASUSVER)	// A, B, Rev 2, B+, CM, Pi2
+	{
+		pinToGpio =  pinToGpio_AP ;
+		physToGpio = physToGpio_AP ;
+	}
+	else 				// A, B, Rev 1, 1.1 
+	{
+		pinToGpio =  pinToGpioR1 ;
+		physToGpio = physToGpioR1 ;
+	}
+	// Open the master /dev/ memory control device
+	// Open the master /dev/memory device
+	#ifdef TINKER_BOARD
+	if ((mem_fd = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) 
+	{
+		printf("can't open /dev/mem \n");
+		return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
+    }
+	for(i=0;i<9;i++)
+    {
+		// mmap GPIO 
+		gpio_map0[i] = mmap(
+			NULL,             // Any adddress in our space will do 
+			PAGE_SIZE,       // Map length 
+			PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory 
+			MAP_SHARED,       // Shared with other processes 
+			mem_fd,           // File to map 
+			RK3288_GPIO(i)         //Offset to GPIO peripheral 
+		);
 		if ((uint32_t)gpio_map0[i] < 0)
-        	return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
-        	close(mem_fd0); // No need to keep mem_fd open after mmap 
+			return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
 		gpio0[i] = (volatile unsigned *)gpio_map0[i];
 		if (wiringPiDebug)
-		printf("GPIO[%d]_SWPORTA_DDR = 0x%x\n",i,*(gpio0[i]+1));
+			printf("GPIO[%d]_SWPORTA_DDR = 0x%x\n",i,*(gpio0[i]+1));
    	}//for
-  
-/////////////mmap grf////////////
-  	if((mem_fd4 = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) {
-                printf("can't open /dev/mem \n");
-                return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
-    	}
-
-        // mmap GPIO 
-    	grf_map = mmap(
-                NULL,             // Any adddress in our space will do 
-                PAGE_SIZE,       // Map length 
-                PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory 
-                MAP_SHARED,       // Shared with other processes 
-                mem_fd4,           // File to map 
-                RK3288_GRF_PHYS         //Offset to GPIO peripheral 
-                );
+	/////////////mmap grf////////////
+	grf_map = mmap(
+		NULL,             // Any adddress in our space will do 
+		PAGE_SIZE,       // Map length 
+		PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory 
+		MAP_SHARED,       // Shared with other processes 
+		mem_fd,           // File to map 
+		RK3288_GRF_PHYS         //Offset to GPIO peripheral 
+	);
 	if (wiringPiDebug)
     	printf ("jason pwm_map = %x\n",grf_map) ;
 	if ((uint32_t)grf_map < 0)
         return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
-    	close(mem_fd4); // No need to keep mem_fd open after mmap
-    	grf = (volatile unsigned *)grf_map;
-////////////////////////////    	
-////////////mmap pwm////////
-	if((mem_fdp = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) {
-                printf("can't open /dev/mem \n");
-                return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
-    	}
+    grf = (volatile unsigned *)grf_map;
+	////////////////////////////  
+	////////////mmap pwm////////
 	pwm_map = mmap(
-                NULL,             // Any adddress in our space will do 
-                PAGE_SIZE,       // Map length 
-                PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory 
-                MAP_SHARED,       // Shared with other processes 
-                mem_fdp,           // File to map 
-                RK3288_PWM         //Offset to GPIO peripheral 
-                );
+		NULL,             // Any adddress in our space will do 
+		PAGE_SIZE,       // Map length 
+		PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory 
+		MAP_SHARED,       // Shared with other processes 
+		mem_fd,           // File to map 
+		RK3288_PWM         //Offset to GPIO peripheral 
+	);
 	if (wiringPiDebug)
     	printf ("jason pwm_map = %x\n",pwm_map) ;
 	if ((uint32_t)pwm_map < 0)
         return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
-    	close(mem_fdp); // No need to keep mem_fd open after mmap
-    	pwm = (volatile unsigned *)pwm_map;
+    pwm = (volatile unsigned *)pwm_map;
 	if (wiringPiDebug)
-	printf("RK3288_PWM0_CTR = 0x%x\n",*(pwm));
-////////////////////////////
-////////////mmap pmu//////////
-	
-	if((mem_fdpmu = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) {
-                printf("can't open /dev/mem \n");
-                return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
-    	}
+		printf("RK3288_PWM0_CTR = 0x%x\n",*(pwm));
+	////////////////////////////
+	////////////mmap pmu//////////
 	pmu_map = mmap(
-                NULL,             // Any adddress in our space will do 
-                PAGE_SIZE,       // Map length 
-                PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory 
-                MAP_SHARED,       // Shared with other processes 
-                mem_fdpmu,           // File to map 
-                RK3288_PMU         //Offset to GPIO peripheral 
-                );
+		NULL,             // Any adddress in our space will do 
+		PAGE_SIZE,       // Map length 
+		PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory 
+		MAP_SHARED,       // Shared with other processes 
+		mem_fd,           // File to map 
+		RK3288_PMU         //Offset to GPIO peripheral 
+	);
 	if (wiringPiDebug)
     	printf ("jason pmu_map = %x\n",pmu_map) ;
 	if ((uint32_t)pmu_map < 0)
         return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
-    	close(mem_fdpmu); // No need to keep mem_fdpmu open after mmap
-    	pmu = (volatile unsigned *)pmu_map;
+    pmu = (volatile unsigned *)pmu_map;
 	if (wiringPiDebug)
-	printf("RK3288_PMU = 0x%x\n",*(pmu));
-
-///////////////////////////////
-////////////mmap cru//////////
-
-        if((mem_fdcru = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) {
-                printf("can't open /dev/mem \n");
-                return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
-        }
-        cru_map = mmap(
-                NULL,             // Any adddress in our space will do
-                PAGE_SIZE,       // Map length
-                PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory
-                MAP_SHARED,       // Shared with other processes
-                mem_fdcru,           // File to map
-                RK3288_CRU         //Offset to GPIO peripheral
-                );
-        if (wiringPiDebug)
-            printf ("jason cru_map = %x\n",cru_map) ;
-        if ((uint32_t)cru_map < 0)
-            return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
-        close(mem_fdcru); // No need to keep mem_fdcru open after mmap
-        cru = (volatile unsigned *)cru_map;
-        if (wiringPiDebug)
-        printf("RK3288_CRU = 0x%x\n",*(cru));
-
-///////////////////////////////
-
-
-
-  }//if(boardRev == ASUSVER)
-
-
-
-
-
-// Map the individual hardware components
-
-//	GPIO:
+		printf("RK3288_PMU = 0x%x\n",*(pmu));
+	///////////////////////////////
+	////////////mmap cru//////////
+	cru_map = mmap(
+		NULL,             // Any adddress in our space will do
+		PAGE_SIZE,       // Map length
+		PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory
+		MAP_SHARED,       // Shared with other processes
+		mem_fd,           // File to map
+		RK3288_CRU         //Offset to GPIO peripheral
+	);
+	if (wiringPiDebug)
+		printf ("jason cru_map = %x\n",cru_map) ;
+	if ((uint32_t)cru_map < 0)
+		return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
+	cru = (volatile unsigned *)cru_map;
+	if (wiringPiDebug)
+		printf("RK3288_CRU = 0x%x\n",*(cru));
+	///////////////////////////////
+	close(mem_fd); // No need to keep mem_fdcru open after mmap
+	#else
+	// Map the individual hardware components
+	// GPIO:
+	if ((fd = open ("/dev/mem", O_RDWR | O_SYNC | O_CLOEXEC) ) < 0)
+		return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
+	gpio = (uint32_t *)mmap(0, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, GPIO_BASE) ;
+	if ((int32_t)gpio == -1)
+		return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: mmap (GPIO) failed: %s\n", strerror (errno)) ;
+	// PWM
+	pwm = (uint32_t *)mmap(0, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, GPIO_PWM) ;
+	if ((int32_t)pwm == -1)
+		return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: mmap (PWM) failed: %s\n", strerror (errno)) ;
+	//	Clock control (needed for PWM)
+	clk = (uint32_t *)mmap(0, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, GPIO_CLOCK_BASE) ;
+	if ((int32_t)clk == -1)
+		return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: mmap (CLOCK) failed: %s\n", strerror (errno)) ;
+	//	The drive pads
+	pads = (uint32_t *)mmap(0, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, GPIO_PADS) ;
+	if ((int32_t)pads == -1)
+		return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: mmap (PADS) failed: %s\n", strerror (errno)) ;
+	#ifdef	USE_TIMER
+	//	The system timer
+	timer = (uint32_t *)mmap(0, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, GPIO_TIMER) ;
+	if ((int32_t)timer == -1)
+		return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: mmap (TIMER) failed: %s\n", strerror (errno)) ;
+	// Set the timer to free-running, 1MHz.
+	// 0xF9 is 249, the timer divide is base clock / (divide+1)
+	// so base clock is 250MHz / 250 = 1MHz.
+	*(timer + TIMER_CONTROL) = 0x0000280 ;
+	*(timer + TIMER_PRE_DIV) = 0x00000F9 ;
+	timerIrqRaw = timer + TIMER_IRQ_RAW ;
+	#endif
+	#endif
+	initialiseEpoch () ;
+	// If we're running on a compute module, then wiringPi pin numbers don't really many anything...
+	piBoardId (&model, &rev, &mem, &maker, &overVolted) ;
+	if (model == PI_MODEL_CM)
+		wiringPiMode = WPI_MODE_GPIO ;
 	else
-	{
- 	 gpio = (uint32_t *)mmap(0, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, GPIO_BASE) ;
- 	 if ((int32_t)gpio == -1)
-    return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: mmap (GPIO) failed: %s\n", strerror (errno)) ;
-
-//	PWM
-
-  pwm = (uint32_t *)mmap(0, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, GPIO_PWM) ;
-  if ((int32_t)pwm == -1)
-    return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: mmap (PWM) failed: %s\n", strerror (errno)) ;
- 
-//	Clock control (needed for PWM)
-
-  clk = (uint32_t *)mmap(0, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, GPIO_CLOCK_BASE) ;
-  if ((int32_t)clk == -1)
-    return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: mmap (CLOCK) failed: %s\n", strerror (errno)) ;
- 
-//	The drive pads
-
-  pads = (uint32_t *)mmap(0, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, GPIO_PADS) ;
-  if ((int32_t)pads == -1)
-    return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: mmap (PADS) failed: %s\n", strerror (errno)) ;
-
-#ifdef	USE_TIMER
-//	The system timer
-
-  timer = (uint32_t *)mmap(0, BLOCK_SIZE, PROT_READ|PROT_WRITE, MAP_SHARED, fd, GPIO_TIMER) ;
-  if ((int32_t)timer == -1)
-    return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: mmap (TIMER) failed: %s\n", strerror (errno)) ;
-
-// Set the timer to free-running, 1MHz.
-//	0xF9 is 249, the timer divide is base clock / (divide+1)
-//	so base clock is 250MHz / 250 = 1MHz.
-
-  *(timer + TIMER_CONTROL) = 0x0000280 ;
-  *(timer + TIMER_PRE_DIV) = 0x00000F9 ;
-  timerIrqRaw = timer + TIMER_IRQ_RAW ;
-#endif
-		}
-  initialiseEpoch () ;
-
-// If we're running on a compute module, then wiringPi pin numbers don't really many anything...
-
-  piBoardId (&model, &rev, &mem, &maker, &overVolted) ;
-  if (model == PI_MODEL_CM)
-    wiringPiMode = WPI_MODE_GPIO ;
-  else
-    wiringPiMode = WPI_MODE_PINS ;
-
-  return 0 ;
+		wiringPiMode = WPI_MODE_PINS ;
+	return 0 ;
 }
 
 
