@@ -2491,54 +2491,31 @@ void pinMode (int pin, int mode)
 
 void pullUpDnControl (int pin, int pud)
 {
-  struct wiringPiNodeStruct *node = wiringPiNodes ;
-//  printf("pin = %d\n",pin);
-if(asusversion == ASUSVER)
-{
+	struct wiringPiNodeStruct *node = wiringPiNodes ;
 	//printf("pin = %d\n",pin);
 	if ((pin & PI_GPIO_MASK) == 0)		// On-Board Pin
   	{
-    		/**/ if (wiringPiMode == WPI_MODE_PINS)
-      		pin = pinToGpio [pin] ;
-    		else if (wiringPiMode == WPI_MODE_PHYS)
-      		pin = physToGpio [pin] ;
-    		else if (wiringPiMode != WPI_MODE_GPIO)
-      		return ;
-
-    		asus_pullUpDnControl(pin, pud);
+		if (wiringPiMode == WPI_MODE_PINS)
+			pin = pinToGpio [pin] ;
+		else if (wiringPiMode == WPI_MODE_PHYS)
+			pin = physToGpio [pin] ;
+		else if (wiringPiMode != WPI_MODE_GPIO)
+			return ;
+		#ifdef TINKER_BOARD
+		asus_pullUpDnControl(pin, pud);
+		#else
+		*(gpio + GPPUD) = pud & 3 ; delayMicroseconds (5) ;
+		*(gpio + gpioToPUDCLK [pin]) = 1 << (pin & 31) ; delayMicroseconds (5) ;
+		*(gpio + GPPUD) = 0 ; delayMicroseconds (5) ;
+		*(gpio + gpioToPUDCLK [pin]) = 0 ; delayMicroseconds (5) ;
+		#endif
   	}
-  	else						// Extension module
+	else						// Extension module
   	{
-    		if ((node = wiringPiFindNode (pin)) != NULL)
-      		node->pullUpDnControl (node, pin, pud) ;
+		if ((node = wiringPiFindNode (pin)) != NULL)
+			node->pullUpDnControl (node, pin, pud) ;
     	return ;
   	}
-	
-}//if(version == ASUSVER)
-else 
- {
-  if ((pin & PI_GPIO_MASK) == 0)		// On-Board Pin
-  {
-    /**/ if (wiringPiMode == WPI_MODE_PINS)
-      pin = pinToGpio [pin] ;
-    else if (wiringPiMode == WPI_MODE_PHYS)
-      pin = physToGpio [pin] ;
-    else if (wiringPiMode != WPI_MODE_GPIO)
-      return ;
-
-    *(gpio + GPPUD)              = pud & 3 ;		delayMicroseconds (5) ;
-    *(gpio + gpioToPUDCLK [pin]) = 1 << (pin & 31) ;	delayMicroseconds (5) ;
-    
-    *(gpio + GPPUD)              = 0 ;			delayMicroseconds (5) ;
-    *(gpio + gpioToPUDCLK [pin]) = 0 ;			delayMicroseconds (5) ;
-  }
-  else						// Extension module
-  {
-    if ((node = wiringPiFindNode (pin)) != NULL)
-      node->pullUpDnControl (node, pin, pud) ;
-    return ;
-  }
- }
 }
 
 
@@ -2550,38 +2527,41 @@ else
 
 int digitalRead (int pin)
 {
-  char c ;
-  struct wiringPiNodeStruct *node = wiringPiNodes ;
-
-  if ((pin & PI_GPIO_MASK) == 0)		// On-Board Pin
-  {
-    /**/ if (wiringPiMode == WPI_MODE_GPIO_SYS)	// Sys mode
-    {
-      if (sysFds [pin] == -1)
-	return LOW ;
-
-      lseek  (sysFds [pin], 0L, SEEK_SET) ;
-      read   (sysFds [pin], &c, 1) ;
-      return (c == '0') ? LOW : HIGH ;
-    }
-    else if (wiringPiMode == WPI_MODE_PINS)
-      pin = pinToGpio [pin] ;
-    else if (wiringPiMode == WPI_MODE_PHYS)
-      pin = physToGpio [pin] ;
-    else if (wiringPiMode != WPI_MODE_GPIO)
-      return LOW ;
-
-    if (asus_digitalRead(pin)!= 0)
-      return HIGH ;
-    else
-      return LOW ;
-  }
-  else
-  {
-    if ((node = wiringPiFindNode (pin)) == NULL)
-      return LOW ;
-    return node->digitalRead (node, pin) ;
-  }
+	char c ;
+	struct wiringPiNodeStruct *node = wiringPiNodes ;
+	if ((pin & PI_GPIO_MASK) == 0)		// On-Board Pin
+	{
+		if (wiringPiMode == WPI_MODE_GPIO_SYS)	// Sys mode
+		{
+			if (sysFds [pin] == -1)
+				return LOW ;
+			lseek  (sysFds [pin], 0L, SEEK_SET) ;
+			read   (sysFds [pin], &c, 1) ;
+			return (c == '0') ? LOW : HIGH ;
+		}
+		else if (wiringPiMode == WPI_MODE_PINS)
+			pin = pinToGpio [pin] ;
+		else if (wiringPiMode == WPI_MODE_PHYS)
+			pin = physToGpio [pin] ;
+		else if (wiringPiMode != WPI_MODE_GPIO)
+			return LOW ;
+		int digitalReadValue = 0;
+		#ifdef TINKER_BOARD
+		digitalReadValue = asus_digitalRead(pin);
+		#else
+		//RPi's Code had been removed.
+		#endif
+		if (digitalReadValue != 0)
+			return HIGH ;
+		else
+			return LOW ;
+	}
+	else
+	{
+		if ((node = wiringPiFindNode (pin)) == NULL)
+			return LOW ;
+		return node->digitalRead (node, pin) ;
+	}
 }
 
 
@@ -2593,37 +2573,38 @@ int digitalRead (int pin)
 
 void digitalWrite (int pin, int value)
 {
-  struct wiringPiNodeStruct *node = wiringPiNodes ;
-//printf("mode  = %d,pin = %d\n",wiringPiMode,pin);
-  if ((pin & PI_GPIO_MASK) == 0)		// On-Board Pin
-  {
-    /**/ if (wiringPiMode == WPI_MODE_GPIO_SYS)	// Sys mode
-    {
-      if (sysFds [pin] != -1)
-      {
-	if (value == LOW)
-	  write (sysFds [pin], "0\n", 2) ;
+	struct wiringPiNodeStruct *node = wiringPiNodes ;
+	//printf("mode  = %d,pin = %d\n",wiringPiMode,pin);
+	if ((pin & PI_GPIO_MASK) == 0)		// On-Board Pin
+	{
+		if (wiringPiMode == WPI_MODE_GPIO_SYS)	// Sys mode
+		{
+			if (sysFds [pin] != -1)
+			{
+				if (value == LOW)
+					write (sysFds [pin], "0\n", 2) ;
+				else
+					write (sysFds [pin], "1\n", 2) ;
+			}
+			return ;
+		}
+		else if (wiringPiMode == WPI_MODE_PINS)
+			pin = pinToGpio [pin] ;
+		else if (wiringPiMode == WPI_MODE_PHYS)
+			pin = physToGpio [pin] ;
+		else if (wiringPiMode != WPI_MODE_GPIO)
+			return ;
+		#ifdef TINKER_BOARD
+		asus_digitalWrite(pin,value);
+		#else
+		//RPi's Code had been removed.
+		#endif  
+	}
 	else
-	  write (sysFds [pin], "1\n", 2) ;
-      }
-      return ;
-    }
-    else if (wiringPiMode == WPI_MODE_PINS)
-      pin = pinToGpio [pin] ;
-    else if (wiringPiMode == WPI_MODE_PHYS)
-      pin = physToGpio [pin] ;
-    else if (wiringPiMode != WPI_MODE_GPIO)
-      return ;
-
-	asus_digitalWrite(pin,value);
-
-    
-  }
-  else
-  {
-    if ((node = wiringPiFindNode (pin)) != NULL)
-      node->digitalWrite (node, pin, value) ;
-  }
+	{
+		if ((node = wiringPiFindNode (pin)) != NULL)
+			node->digitalWrite (node, pin, value) ;
+	}
 }
 
 
