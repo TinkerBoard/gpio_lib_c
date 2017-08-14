@@ -2153,22 +2153,17 @@ void pwmSetMode (int mode)
 
 void pwmSetRange (unsigned int range)
 {
-  if(asusversion == ASUSVER)
-  {
-    if ((wiringPiMode == WPI_MODE_PINS) || (wiringPiMode == WPI_MODE_PHYS) || (wiringPiMode == WPI_MODE_GPIO))
-      pwm_range = range;
-  }
-  else
-  {
-    if ((wiringPiMode == WPI_MODE_PINS) || (wiringPiMode == WPI_MODE_PHYS) || (wiringPiMode == WPI_MODE_GPIO))
-    {
-      if (RASPBERRY_PI_PERI_BASE == 0)	// Ignore for now
-        return ;
-
-      *(pwm + PWM0_RANGE) = range ; delayMicroseconds (10) ;
-      *(pwm + PWM1_RANGE) = range ; delayMicroseconds (10) ;
-    }
-  }
+	if ((wiringPiMode == WPI_MODE_PINS) || (wiringPiMode == WPI_MODE_PHYS) || (wiringPiMode == WPI_MODE_GPIO))
+	{
+		#ifdef TINKER_BOARD
+		pwm_range = range;
+		#else
+		if (RASPBERRY_PI_PERI_BASE == 0)	// Ignore for now
+			return ;
+		*(pwm + PWM0_RANGE) = range ; delayMicroseconds (10) ;
+		*(pwm + PWM1_RANGE) = range ; delayMicroseconds (10) ;
+		#endif
+	}
 }
 
 
@@ -2182,51 +2177,38 @@ void pwmSetRange (unsigned int range)
 
 void pwmSetClock (int divisor)
 {
-  uint32_t pwm_control ;
-  divisor &= 4095 ;
-  if(asusversion == ASUSVER)
-  {
-    if ((wiringPiMode == WPI_MODE_PINS) || (wiringPiMode == WPI_MODE_PHYS) || (wiringPiMode == WPI_MODE_GPIO))
-      pwm_divisor = divisor;
-  }
-  else
-  {
-    if ((wiringPiMode == WPI_MODE_PINS) || (wiringPiMode == WPI_MODE_PHYS) || (wiringPiMode == WPI_MODE_GPIO))
-    {
-      if (RASPBERRY_PI_PERI_BASE == 0)	// Ignore for now
-        return ;
+	uint32_t pwm_control ;
+	divisor &= 4095 ;
+	if ((wiringPiMode == WPI_MODE_PINS) || (wiringPiMode == WPI_MODE_PHYS) || (wiringPiMode == WPI_MODE_GPIO))
+	{
+		#ifdef TINKER_BOARD
+		pwm_divisor = divisor;
+		#else
+		if (RASPBERRY_PI_PERI_BASE == 0)	// Ignore for now
+			return ;
+		if (wiringPiDebug)
+			printf ("Setting to: %d. Current: 0x%08X\n", divisor, *(clk + PWMCLK_DIV)) ;
+		pwm_control = *(pwm + PWM_CONTROL) ;		// preserve PWM_CONTROL
+		// We need to stop PWM prior to stopping PWM clock in MS mode otherwise BUSY
+		// stays high.
+		*(pwm + PWM_CONTROL) = 0 ;				// Stop PWM
 
-      if (wiringPiDebug)
-        printf ("Setting to: %d. Current: 0x%08X\n", divisor, *(clk + PWMCLK_DIV)) ;
-
-      pwm_control = *(pwm + PWM_CONTROL) ;		// preserve PWM_CONTROL
-
-      // We need to stop PWM prior to stopping PWM clock in MS mode otherwise BUSY
-      // stays high.
-
-      *(pwm + PWM_CONTROL) = 0 ;				// Stop PWM
-
-// Stop PWM clock before changing divisor. The delay after this does need to
-// this big (95uS occasionally fails, 100uS OK), it's almost as though the BUSY
-// flag is not working properly in balanced mode. Without the delay when DIV is
-// adjusted the clock sometimes switches to very slow, once slow further DIV
-// adjustments do nothing and it's difficult to get out of this mode.
-
-      *(clk + PWMCLK_CNTL) = BCM_PASSWORD | 0x01 ;	// Stop PWM Clock
-        delayMicroseconds (110) ;			// prevents clock going sloooow
-
-      while ((*(clk + PWMCLK_CNTL) & 0x80) != 0)	// Wait for clock to be !BUSY
-        delayMicroseconds (1) ;
-
-      *(clk + PWMCLK_DIV)  = BCM_PASSWORD | (divisor << 12) ;
-
-      *(clk + PWMCLK_CNTL) = BCM_PASSWORD | 0x11 ;	// Start PWM clock
-      *(pwm + PWM_CONTROL) = pwm_control ;		// restore PWM_CONTROL
-
-      if (wiringPiDebug)
-        printf ("Set     to: %d. Now    : 0x%08X\n", divisor, *(clk + PWMCLK_DIV)) ;
-    }
-  }
+		// Stop PWM clock before changing divisor. The delay after this does need to
+		// this big (95uS occasionally fails, 100uS OK), it's almost as though the BUSY
+		// flag is not working properly in balanced mode. Without the delay when DIV is
+		// adjusted the clock sometimes switches to very slow, once slow further DIV
+		// adjustments do nothing and it's difficult to get out of this mode.
+		*(clk + PWMCLK_CNTL) = BCM_PASSWORD | 0x01 ;	// Stop PWM Clock
+		delayMicroseconds (110) ;			// prevents clock going sloooow
+		while ((*(clk + PWMCLK_CNTL) & 0x80) != 0)	// Wait for clock to be !BUSY
+			delayMicroseconds (1) ;
+		*(clk + PWMCLK_DIV)  = BCM_PASSWORD | (divisor << 12) ;
+		*(clk + PWMCLK_CNTL) = BCM_PASSWORD | 0x11 ;	// Start PWM clock
+		*(pwm + PWM_CONTROL) = pwm_control ;		// restore PWM_CONTROL
+		if (wiringPiDebug)
+			printf ("Set     to: %d. Now    : 0x%08X\n", divisor, *(clk + PWMCLK_DIV)) ;
+		#endif
+	}
 }
 
 
@@ -2239,7 +2221,6 @@ void pwmSetClock (int divisor)
 void gpioClockSet (int pin, int freq)
 {
 	int divi, divr, divf ;
-
 	#ifndef TINKER_BOARD
 	pin &= 63;
 	#endif
@@ -2659,52 +2640,24 @@ void digitalWrite (int pin, int value)
 
 void pwmWrite (int pin, int value)
 {
-  struct wiringPiNodeStruct *node = wiringPiNodes ;
-  if(asusversion == ASUSVER)
-  {
-    if ((pin & PI_GPIO_MASK) == 0)          // On-Board Pin
+	struct wiringPiNodeStruct *node = wiringPiNodes ;
+	if ((pin & PI_GPIO_MASK) == 0)          // On-Board Pin
     {
-      if (wiringPiMode == WPI_MODE_PINS)
-        pin = pinToGpio [pin] ;
-      else if (wiringPiMode == WPI_MODE_PHYS)
-        pin = physToGpio [pin] ;
-      else if (wiringPiMode != WPI_MODE_GPIO)
-        return ;
-
-      if (pin == PWM2)
-        asus_pwm_start(2,0,pwm_divisor*pwm_range,pwm_divisor*value);
-      else if (pin == PWM3)
-        asus_pwm_start(3,0,pwm_divisor*pwm_range,pwm_divisor*value);
-
-    }
-    else
-    {
-      if ((node = wiringPiFindNode (pin)) != NULL)
-        node->pwmWrite (node, pin, value) ;
-    }
-  }
-  else
-  {
-	if ((pin & PI_GPIO_MASK) == 0)		// On-Board Pin
-	{
-		if (RASPBERRY_PI_PERI_BASE == 0)	// Ignore for now
-			return ;
-
-		/**/ if (wiringPiMode == WPI_MODE_PINS)
+		if (wiringPiMode == WPI_MODE_PINS)
 			pin = pinToGpio [pin] ;
 		else if (wiringPiMode == WPI_MODE_PHYS)
 			pin = physToGpio [pin] ;
 		else if (wiringPiMode != WPI_MODE_GPIO)
 			return ;
-
+		#ifdef TINKER_BOARD
+		if (pin == PWM2)
+			asus_pwm_start(2,0,pwm_divisor*pwm_range,pwm_divisor*value);
+		else if (pin == PWM3)
+			asus_pwm_start(3,0,pwm_divisor*pwm_range,pwm_divisor*value);
+		#else
 		*(pwm + gpioToPwmPort [pin]) = value ;
-	}
-	else
-	{
-		if ((node = wiringPiFindNode (pin)) != NULL)
-		node->pwmWrite (node, pin, value) ;
-	}
-}
+		#endif
+    }
 }
 
 /*
