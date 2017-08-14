@@ -90,7 +90,7 @@
 // Mask for the bottom 64 pins which belong to the Raspberry Pi
 //	The others are available for the other devices
 
-#define	PI_GPIO_MASK	(0xFFFFFF00)
+#define	PI_GPIO_MASK	(0xFFFFFE00)
 
 struct wiringPiNodeStruct *wiringPiNodes = NULL ;
 
