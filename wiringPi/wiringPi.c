@@ -80,6 +80,8 @@
 #define	FALSE	(1==2)
 #endif
 
+#define TINKER_BOARD
+
 // Environment Variables
 
 #define	ENV_DEBUG	"WIRINGPI_DEBUG"
@@ -2427,124 +2429,97 @@ void pinModeAlt (int pin, int mode)
 
 void pinMode (int pin, int mode)
 {
-  int    fSel, shift, alt ;
-  struct wiringPiNodeStruct *node = wiringPiNodes ;
-  int origPin = pin ;
-  if(asusversion == ASUSVER)
-  {
+    int    fSel, shift, alt ;
+    struct wiringPiNodeStruct *node = wiringPiNodes ;
+    int origPin = pin ;
     if ((pin & PI_GPIO_MASK) == 0)		// On-board pin
     {
-      /**/ if (wiringPiMode == WPI_MODE_PINS)
-        pin = pinToGpio [pin] ;
-      else if (wiringPiMode == WPI_MODE_PHYS)
-        pin = physToGpio [pin] ;
-      else if (wiringPiMode != WPI_MODE_GPIO)
-        return ;
-
-      softPwmStop  (origPin) ;
-      softToneStop (origPin) ;
-
-      fSel    = gpioToGPFSEL [pin] ;
-      shift   = gpioToShift  [pin] ;
-
-      /**/ if (mode == INPUT)
-        asus_set_pin_mode(pin,INPUT); // Sets bits to zero = input
-      else if (mode == OUTPUT)
-        asus_set_pin_mode(pin, OUTPUT);
-      else if (mode == SOFT_PWM_OUTPUT)
-        softPwmCreate (origPin, 0, 100) ;
-      else if (mode == PWM_OUTPUT)
-      {
-	
-        if((pin==PWM2)||(pin==PWM3))
-        {
-          asus_set_pin_mode(pin,PWM_OUTPUT);
-          pwmSetRange (1024) ;            // Default range of 1024
-          pwmSetClock (124) ;              // 74.25Mhz / 124 = 599KHz
-          return;
+        if (wiringPiMode == WPI_MODE_PINS)
+            pin = pinToGpio [pin] ;
+        else if (wiringPiMode == WPI_MODE_PHYS)
+            pin = physToGpio [pin] ;
+        else if (wiringPiMode != WPI_MODE_GPIO)
+            return ;
+        softPwmStop  (origPin) ;
+        softToneStop (origPin) ;
+        fSel    = gpioToGPFSEL [pin] ;
+        shift   = gpioToShift  [pin] ;
+        if (mode == INPUT)
+			#ifdef TINKER_BOARD
+            asus_set_pin_mode(pin,INPUT); // Sets bits to zero = input
+			#else
+			*(gpio + fSel) = (*(gpio + fSel) & ~(7 << shift)) ; // Sets bits to zero = input
+			#endif
+        else if (mode == OUTPUT)
+			#ifdef TINKER_BOARD
+			asus_set_pin_mode(pin, OUTPUT);
+			#else
+			*(gpio + fSel) = (*(gpio + fSel) & ~(7 << shift)) | (1 << shift) ;
+			#endif
+        else if (mode == SOFT_PWM_OUTPUT)
+			softPwmCreate (origPin, 0, 100) ;
+		else if (mode == SOFT_TONE_OUTPUT)
+		{
+			#ifdef TINKER_BOARD
+			#else
+			softToneCreate (origPin) ;
+			#endif
+		}
+		else if (mode == PWM_TONE_OUTPUT)
+		{
+			#ifdef TINKER_BOARD
+			#else
+			pinMode (origPin, PWM_OUTPUT) ;	// Call myself to enable PWM mode
+			pwmSetMode (PWM_MODE_MS) ;
+			#endif
+		}
+        else if (mode == PWM_OUTPUT)
+		{
+			#ifdef TINKER_BOARD
+			if((pin==PWM2)||(pin==PWM3))
+			{
+				asus_set_pin_mode(pin,PWM_OUTPUT);
+				pwmSetRange (1024) ;            // Default range of 1024
+				pwmSetClock (124) ;              // 74.25Mhz / 124 = 599KHz
+				return;
+			}
+			printf("the pin you choose is not surport hardware PWM\n");
+			printf("or you can use it in softPwm mode\n"); 
+			return ;
+            #else
+			if ((alt = gpioToPwmALT [pin]) == 0)	// Not a hardware capable PWM pin
+				return ;
+			// Set pin to PWM mode
+			*(gpio + fSel) = (*(gpio + fSel) & ~(7 << shift)) | (alt << shift) ;
+			delayMicroseconds (110) ;		// See comments in pwmSetClockWPi
+			pwmSetMode  (PWM_MODE_BAL) ;	// Pi default mode
+			pwmSetRange (1024) ;		// Default range of 1024
+			pwmSetClock (32) ;		// 19.2 / 32 = 600KHz - Also starts the PWM
+			#endif
         }
-
-        printf("the pin you choose is not surport hardware PWM\n");
-        printf("or you can use it in softPwm mode\n");  
-        return ;
-       }
-       else if (mode == GPIO_CLOCK)
-       {
-         asus_set_pin_mode(pin,GPIO_CLOCK);
-
-        // Set pin to GPIO_CLOCK mode and set the clock frequency to 1000KHz
-        delayMicroseconds (110) ;
-        gpioClockSet      (origPin, 1000000) ;
-      }
+		else if (mode == GPIO_CLOCK)
+		{
+			#ifdef TINKER_BOARD
+			asus_set_pin_mode(pin,GPIO_CLOCK);
+			// Set pin to GPIO_CLOCK mode and set the clock frequency to 1000KHz
+			delayMicroseconds (110) ;
+			gpioClockSet      (origPin, 1000000) ;
+			#else
+			if ((alt = gpioToGpClkALT0 [pin]) == 0)	// Not a GPIO_CLOCK pin
+			return ;
+			// Set pin to GPIO_CLOCK mode and set the clock frequency to 100KHz
+			*(gpio + fSel) = (*(gpio + fSel) & ~(7 << shift)) | (alt << shift) ;
+			delayMicroseconds (110) ;
+			gpioClockSet      (pin, 100000) ;
+			#endif
+		}
     }//if ((pin & PI_GPIO_MASK) == 0)
     else
     {
-      if ((node = wiringPiFindNode (pin)) != NULL)
-        node->pinMode (node, pin, mode) ;
-      return ;
-    }
-  }//if(asusversion == ASUSVER)
-  else
-  {
-    if ((pin & PI_GPIO_MASK) == 0)		// On-board pin
-    {
-      /**/ if (wiringPiMode == WPI_MODE_PINS)
-        pin = pinToGpio [pin] ;
-      else if (wiringPiMode == WPI_MODE_PHYS)
-        pin = physToGpio [pin] ;
-      else if (wiringPiMode != WPI_MODE_GPIO)
-        return ;
-  
-      softPwmStop  (origPin) ;
-      softToneStop (origPin) ;
-  
-      fSel    = gpioToGPFSEL [pin] ;
-      shift   = gpioToShift  [pin] ;
-  
-      if (mode == INPUT)
-        *(gpio + fSel) = (*(gpio + fSel) & ~(7 << shift)) ; // Sets bits to zero = input
-      else if (mode == OUTPUT)
-        *(gpio + fSel) = (*(gpio + fSel) & ~(7 << shift)) | (1 << shift) ;
-      else if (mode == SOFT_PWM_OUTPUT)
-        softPwmCreate (origPin, 0, 100) ;
-      else if (mode == SOFT_TONE_OUTPUT)
-        softToneCreate (origPin) ;
-      else if (mode == PWM_TONE_OUTPUT)
-      {
-        pinMode (origPin, PWM_OUTPUT) ;	// Call myself to enable PWM mode
-        pwmSetMode (PWM_MODE_MS) ;
-      }
-      else if (mode == PWM_OUTPUT)
-      {
-        if ((alt = gpioToPwmALT [pin]) == 0)	// Not a hardware capable PWM pin
-  	    return ;
-  
-        // Set pin to PWM mode
-        *(gpio + fSel) = (*(gpio + fSel) & ~(7 << shift)) | (alt << shift) ;
-        delayMicroseconds (110) ;		// See comments in pwmSetClockWPi
-  
-        pwmSetMode  (PWM_MODE_BAL) ;	// Pi default mode
-        pwmSetRange (1024) ;		// Default range of 1024
-        pwmSetClock (32) ;		// 19.2 / 32 = 600KHz - Also starts the PWM
-      }
-      else if (mode == GPIO_CLOCK)
-      {
-        if ((alt = gpioToGpClkALT0 [pin]) == 0)	// Not a GPIO_CLOCK pin
-  	    return ;
-  
-        // Set pin to GPIO_CLOCK mode and set the clock frequency to 100KHz
-        *(gpio + fSel) = (*(gpio + fSel) & ~(7 << shift)) | (alt << shift) ;
-        delayMicroseconds (110) ;
-        gpioClockSet      (pin, 100000) ;
-      }
-    }
-    else
-    {
-      if ((node = wiringPiFindNode (pin)) != NULL)
-        node->pinMode (node, pin, mode) ;
-      return ;
-    }
-  }
+		if ((node = wiringPiFindNode (pin)) != NULL)
+			node->pinMode (node, pin, mode) ;
+		return ;
+	}
 }
 
 
