@@ -2238,62 +2238,43 @@ void pwmSetClock (int divisor)
 
 void gpioClockSet (int pin, int freq)
 {
-  int divi, divr, divf ;
+	int divi, divr, divf ;
 
-if(asusversion == ASUSVER)
-  {
-  /**/ if (wiringPiMode == WPI_MODE_PINS)
-    pin = pinToGpio [pin] ;
-  else if (wiringPiMode == WPI_MODE_PHYS)
-    pin = physToGpio [pin] ;
-  else if (wiringPiMode != WPI_MODE_GPIO)
-    return ;
-
-  if(pin != 17)
-  {
-     printf("This pin cannot set as gpio clock\n");
-     return;
-  }
-
-  divi = 297000000 / freq ;
-  divr = 297000000 % freq ;
-
-  if (divi > 31)
-    divi = 31 ;
-
-
-  *(cru+CRU_CLKSEL2_CON/4) = (*(cru+CRU_CLKSEL2_CON/4) & (~(0x1F<<8))) | divi<<(8+16) | (divi<<8);
-      if (wiringPiDebug)
-        printf("cru = 0x%x\n",*(cru+CRU_CLKSEL2_CON/4));
-
-  }
-else{
-  pin &= 63 ;
-
-  /**/ if (wiringPiMode == WPI_MODE_PINS)
-    pin = pinToGpio [pin] ;
-  else if (wiringPiMode == WPI_MODE_PHYS)
-    pin = physToGpio [pin] ;
-  else if (wiringPiMode != WPI_MODE_GPIO)
-    return ;
-  
-  if (RASPBERRY_PI_PERI_BASE == 0)	// Ignore for now
-    return ;
-
-  divi = 19200000 / freq ;
-  divr = 19200000 % freq ;
-  divf = (int)((double)divr * 4096.0 / 19200000.0) ;
-
-  if (divi > 4095)
-    divi = 4095 ;
-
-  *(clk + gpioToClkCon [pin]) = BCM_PASSWORD | GPIO_CLOCK_SOURCE ;		// Stop GPIO Clock
-  while ((*(clk + gpioToClkCon [pin]) & 0x80) != 0)				// ... and wait
+	#ifndef TINKER_BOARD
+	pin &= 63;
+	#endif
+	if (wiringPiMode == WPI_MODE_PINS)
+		pin = pinToGpio [pin] ;
+	else if (wiringPiMode == WPI_MODE_PHYS)
+		pin = physToGpio [pin] ;
+	else if (wiringPiMode != WPI_MODE_GPIO)
+		return ;
+	#ifdef TINKER_BOARD
+	if(pin != 17)
+	{
+		printf("This pin cannot set as gpio clock\n");
+		return;
+	}
+	divi = 297000000 / freq ;
+	if (divi > 31)
+		divi = 31 ;
+	*(cru+CRU_CLKSEL2_CON/4) = (*(cru+CRU_CLKSEL2_CON/4) & (~(0x1F<<8))) | 0x1f << (8+16) | (divi<<8);
+	if (wiringPiDebug)
+		printf("cru = 0x%x\n", *(cru+CRU_CLKSEL2_CON/4));
+	#else
+	if (RASPBERRY_PI_PERI_BASE == 0)	// Ignore for now
+        return ;
+	divi = 19200000 / freq ;
+	divr = 19200000 % freq ;
+	divf = (int)((double)divr * 4096.0 / 19200000.0) ;
+	if (divi > 4095)
+		divi = 4095 ;
+	*(clk + gpioToClkCon [pin]) = BCM_PASSWORD | GPIO_CLOCK_SOURCE ;		// Stop GPIO Clock
+	while ((*(clk + gpioToClkCon [pin]) & 0x80) != 0)				// ... and wait
     ;
-
-  *(clk + gpioToClkDiv [pin]) = BCM_PASSWORD | (divi << 12) | divf ;		// Set dividers
-  *(clk + gpioToClkCon [pin]) = BCM_PASSWORD | 0x10 | GPIO_CLOCK_SOURCE ;	// Start Clock
-}
+	*(clk + gpioToClkDiv [pin]) = BCM_PASSWORD | (divi << 12) | divf ;		// Set dividers
+	*(clk + gpioToClkCon [pin]) = BCM_PASSWORD | 0x10 | GPIO_CLOCK_SOURCE ;	// Start Clock
+	#endif
 }
 
 
