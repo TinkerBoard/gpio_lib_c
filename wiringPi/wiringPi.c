@@ -2658,6 +2658,11 @@ void pwmWrite (int pin, int value)
 		*(pwm + gpioToPwmPort [pin]) = value ;
 		#endif
     }
+	else
+	{
+		if ((node = wiringPiFindNode (pin)) != NULL)
+			node->pwmWrite (node, pin, value) ;
+	}
 }
 
 /*
