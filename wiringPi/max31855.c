@@ -1,4 +1,4 @@
-dasdas/*
+/*
  * max31855.c:
  *	Extend wiringPi with the max31855 SPI Analog to Digital convertor
  *	Copyright (c) 2012-2015 Gordon Henderson
