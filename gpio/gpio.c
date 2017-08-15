@@ -732,17 +732,17 @@ void doMode (int argc, char *argv [])
   else if (strcasecmp (mode, "output")  == 0) pinMode         (pin, OUTPUT) ;
   else if (strcasecmp (mode, "pwm")     == 0) pinMode         (pin, PWM_OUTPUT) ;
   //else if (strcasecmp (mode, "pwmTone") == 0) pinMode         (pin, PWM_TONE_OUTPUT) ;
-  //else if (strcasecmp (mode, "clock")   == 0) pinMode         (pin, GPIO_CLOCK) ;
+  else if (strcasecmp (mode, "clock")   == 0) pinMode         (pin, GPIO_CLOCK) ;
   else if (strcasecmp (mode, "up")      == 0) pullUpDnControl (pin, PUD_UP) ;
   else if (strcasecmp (mode, "down")    == 0) pullUpDnControl (pin, PUD_DOWN) ;
   else if (strcasecmp (mode, "tri")     == 0) pullUpDnControl (pin, PUD_OFF) ;
   else if (strcasecmp (mode, "off")     == 0) pullUpDnControl (pin, PUD_OFF) ;
-  //else if (strcasecmp (mode, "alt0")    == 0) pinModeAlt (pin, 0b100) ;
-  //else if (strcasecmp (mode, "alt1")    == 0) pinModeAlt (pin, 0b101) ;
-  //else if (strcasecmp (mode, "alt2")    == 0) pinModeAlt (pin, 0b110) ;
-  //else if (strcasecmp (mode, "alt3")    == 0) pinModeAlt (pin, 0b111) ;
-  //else if (strcasecmp (mode, "alt4")    == 0) pinModeAlt (pin, 0b011) ;
-  //else if (strcasecmp (mode, "alt5")    == 0) pinModeAlt (pin, 0b010) ;
+  else if (strcasecmp (mode, "alt0")    == 0) pinModeAlt (pin, 0b100) ;
+  else if (strcasecmp (mode, "alt1")    == 0) pinModeAlt (pin, 0b101) ;
+  else if (strcasecmp (mode, "alt2")    == 0) pinModeAlt (pin, 0b110) ;
+  else if (strcasecmp (mode, "alt3")    == 0) pinModeAlt (pin, 0b111) ;
+  else if (strcasecmp (mode, "alt4")    == 0) pinModeAlt (pin, 0b011) ;
+  else if (strcasecmp (mode, "alt5")    == 0) pinModeAlt (pin, 0b010) ;
   else
   {
     fprintf (stderr, "%s: Invalid mode: %s. Should be in/out/pwm/clock/up/down/tri\n", argv [1], mode) ;
@@ -1210,7 +1210,7 @@ static void doVersion (char *argv [])
 ***************/
   if(model == PI_MODEL_ASUSPI)
   {
-	printf ("Miniarm Details:\n") ;
+	printf ("TinkerBoard Details:\n") ;
     	printf ("  Type: %s, Revision: %s, Memory: %dMB, Maker: %s %s\n", 
 	piModelNames [model], piRevisionNames [rev], piMemorySize [mem], piMakerNames [maker], warranty ? "[Out of Warranty]" : "") ;
 	
@@ -1282,24 +1282,7 @@ int main (int argc, char *argv [])
 
   if (strcmp (argv [1], "-v") == 0)
   {
-    printf ("gpio version: %s\n", VERSION) ;
-    printf ("Copyright (c) 2012-2015 Gordon Henderson\n") ;
-    printf ("This is free software with ABSOLUTELY NO WARRANTY.\n") ;
-    printf ("For details type: %s -warranty\n", argv [0]) ;
-    printf ("\n") ;
-    piBoardId (&model, &rev, &mem, &maker, &warranty) ;
-    if (model == 1)
-    {
-      printf ("Your Raspberry Pi has an unknown model type. Please report this to\n") ;
-      printf ("    projects@drogon.net\n") ;
-      printf ("with a copy of your /proc/cpuinfo if possible\n") ;
-    }
-    else
-    {
-      printf ("asus Pi Details:\n") ;
-      printf ("  Type: %s, Revision: %s, Memory: %dMB, Maker: %s %s\n", 
-	  piModelNames [model], piRevisionNames [rev], mem, piMakerNames [maker], warranty ? "[OV]" : "") ;
-    }
+	  doVersion (argv) ;
     return 0 ;
   }
 

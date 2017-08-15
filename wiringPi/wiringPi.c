@@ -95,13 +95,10 @@
 
 #ifdef TINKER_BOARD
 #define	PI_GPIO_MASK	(0xFFFFFE00)
-#else
-#define	PI_GPIO_MASK	(0xFFFFFFC0)
-#endif
-
-#ifdef TINKER_BOARD
 #include "RKIO.h"
 #include "wiringTB.h"
+#else
+#define	PI_GPIO_MASK	(0xFFFFFFC0)
 #endif
 
 struct wiringPiNodeStruct *wiringPiNodes = NULL ;
@@ -287,7 +284,7 @@ const int piMemorySize [8] =
    256,		//	 0
    512,		//	 1
   1024,		//	 2
-     0,		//	 3
+  2048,		//	 3
      0,		//	 4
      0,		//	 5
      0,		//	 6
@@ -1073,7 +1070,7 @@ void piBoardId (int *model, int *rev, int *mem, int *maker, int *warranty)
     else if (strcmp (c, "0013") == 0) { *model = PI_MODEL_BP ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_EGOMAN  ; }
     else if (strcmp (c, "0014") == 0) { *model = PI_MODEL_CM ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_SONY    ; }
     else if (strcmp (c, "0015") == 0) { *model = PI_MODEL_AP ; *rev = PI_VERSION_1_1 ; *mem = 0 ; *maker = PI_MAKER_SONY    ; }
-	else if (strcmp (c, "0000") == 0) { *model = PI_MODEL_ASUSPI;  *rev = PI_VERSION_1_2;  *mem = 2048;  *maker = PI_MAKER_ASUS;}
+	else if (strcmp (c, "0000") == 0) { *model = PI_MODEL_ASUSPI;  *rev = PI_VERSION_1_2;  *mem = 3;  *maker = PI_MAKER_ASUS;}
 	else                              { *model = 0           ; *rev = 0              ; *mem =   0 ; *maker = 0 ;               }
   }
 }
