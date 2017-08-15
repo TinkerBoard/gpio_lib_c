@@ -1151,32 +1151,24 @@ void setPadDrive (int group, int value)
 
 int getAlt (int pin)
 {
-  int fSel, shift, alt ;
-
-  if(asusversion == ASUSVER)
-  {
-    printf("getAlt is not available for ASUS Tinker. Maybe you can use getPinMode.\n");
-    return 0;
-  }
-  else
-  {
-
-  pin &= 63 ;
-
-  /**/ if (wiringPiMode == WPI_MODE_PINS)
-    pin = pinToGpio [pin] ;
-  else if (wiringPiMode == WPI_MODE_PHYS)
-    pin = physToGpio [pin] ;
-  else if (wiringPiMode != WPI_MODE_GPIO)
-    return 0 ;
-
-  fSel    = gpioToGPFSEL [pin] ;
-  shift   = gpioToShift  [pin] ;
-
-  alt = (*(gpio + fSel) >> shift) & 7 ;
-
-  return alt ;
-  }
+	#ifndef TINKER_BOARD
+	int fSel, shift, alt ;
+    pin &= 63 ;
+	#endif
+	if (wiringPiMode == WPI_MODE_PINS)
+		pin = pinToGpio [pin] ;
+	else if (wiringPiMode == WPI_MODE_PHYS)
+		pin = physToGpio [pin] ;
+	else if (wiringPiMode != WPI_MODE_GPIO)
+		return 0 ;
+	#ifdef TINKER_BOARD
+    return asus_get_pinAlt(pin);
+	#else
+	fSel = gpioToGPFSEL [pin] ;
+	shift = gpioToShift [pin] ;
+	alt = (*(gpio + fSel) >> shift) & 7 ;
+	return alt ;
+	#endif
 }
 
 /*

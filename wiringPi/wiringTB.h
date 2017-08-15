@@ -4,23 +4,6 @@
 #include "RKIO.h"
 #include "wiringPi.h"
 
-//jason add for asuspi
-static int  mem_fd;
-static void* gpio_map0[9];
-static volatile unsigned* gpio0[9];
-
-static void *grf_map;
-static volatile unsigned *grf;
-
-static void *pwm_map;
-static volatile unsigned *pwm;
-
-static void *pmu_map;
-static volatile unsigned *pmu;
-
-static void *cru_map;
-static volatile unsigned *cru;
-
 static int pwm_divisor = 124;
 static int pwm_range = 1024;
 
@@ -87,5 +70,5 @@ void asus_pwm_disable(int pwm_ch);
 void asus_pwm_start(int pwm_ch,int mode,unsigned int range,unsigned int duty);
 void asus_pwm_stop(int pwm_ch);
 void asus_set_gpioClockFreq(int pin, int freq);
-
+int asus_get_pinAlt(int pin);
 #endif

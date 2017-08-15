@@ -10,6 +10,34 @@
 #define	PAGE_SIZE		(4*1024)
 #define	BLOCK_SIZE		(4*1024)
 
+// Port function select bits
+
+#define	FSEL_INPT		0b000
+#define	FSEL_OUTP		0b001
+#define	FSEL_ALT0		0b100
+#define	FSEL_ALT1		0b101
+#define	FSEL_ALT2		0b110
+#define	FSEL_ALT3		0b111
+#define	FSEL_ALT4		0b011
+#define	FSEL_ALT5		0b010
+
+//jason add for asuspi
+static int  mem_fd;
+static void* gpio_map0[9];
+static volatile unsigned* gpio0[9];
+
+static void *grf_map;
+static volatile unsigned *grf;
+
+static void *pwm_map;
+static volatile unsigned *pwm;
+
+static void *pmu_map;
+static volatile unsigned *pmu;
+
+static void *cru_map;
+static volatile unsigned *cru;
+
 void tinker_board_setup(void)
 {
 	int i;
@@ -652,4 +680,115 @@ void asus_set_gpioClockFreq(int pin, int freq)
 	if (divi > 31)
 		divi = 31 ;
 	*(cru+CRU_CLKSEL2_CON/4) = (*(cru+CRU_CLKSEL2_CON/4) & (~(0x1F<<8))) | 0x1f << (8+16) | (divi<<8);
+}
+
+int asus_get_pinAlt(int pin)
+{
+	int alt;
+	switch(pin)
+	{
+		//GPIO0
+		case 17 : 
+			alt =  ((*(pmu+PMU_GPIO0C_IOMUX/4))>>((pin%8)*2)) & 0x00000003;  
+			break;			
+		//GPIO5B
+		case 160 : 
+		case 161 :
+		case 162 :
+		case 163 :
+			alt = ((*(grf+GRF_GPIO5B_IOMUX/4))>>((pin%8)*2)) & 0x00000003;
+			break;
+		case 164 :
+		case 165 :
+		case 166 :
+		case 167 :
+			alt = ((*(grf+GRF_GPIO5B_IOMUX/4))>>((pin%8)*2)) & 0x00000003;
+			break;
+		
+		//GPIO5C
+		case 168 : 
+			alt = ((*(grf+GRF_GPIO5C_IOMUX/4))>>((pin%8)*2)) & 0x00000003;
+			break;
+		case 169 :
+		case 170 :
+		case 171 :
+			alt = ((*(grf+GRF_GPIO5C_IOMUX/4))>>((pin%8)*2)) & 0x00000001;
+			break;
+		//GPIO6A
+		case 184 : 
+		case 185 :
+		case 187 :
+		case 188 :
+			alt = ((*(grf+GRF_GPIO6A_IOMUX/4))>>((pin%8)*2)) & 0x00000001;
+			break;
+		//GPIO7A7
+		case 223 : 
+			alt = ((*(grf+GRF_GPIO7A_IOMUX/4))>>((pin%8)*2)) & 0x00000003;
+			break;
+
+		//GPIO7B
+		case 224 : 
+		case 225 : 
+			alt = ((*(grf+GRF_GPIO7B_IOMUX/4))>>((pin%8)*2)) & 0x00000003;
+			break;
+		case 226 : 
+			alt = ((*(grf+GRF_GPIO7B_IOMUX/4))>>((pin%8)*2)) & 0x00000003;
+			break;
+		//GPIO7C
+		case 233 : 
+		case 234 : 
+			alt = ((*(grf+GRF_GPIO7CL_IOMUX/4))>>((pin%8)*2)) & 0x00000001;
+			break;
+		case 238 : 
+			alt = ((*(grf+GRF_GPIO7CH_IOMUX/4))>>(((pin-4)%8)*4)) & 0x00000003;
+			break;
+		case 239 : 
+			alt = ((*(grf+GRF_GPIO7CH_IOMUX/4))>>(((pin-4)%8)*4)) & 0x00000007;
+			break;
+
+		//GPIO8A
+		case 251 : 
+		case 254 :
+		case 255 :
+			alt = ((*(grf+GRF_GPIO8A_IOMUX/4))>>((pin%8)*2)) & 0x00000003;
+			break;
+		case 252 : 
+		case 253 :
+			alt = ((*(grf+GRF_GPIO8A_IOMUX/4))>>((pin%8)*2)) & 0x00000003;  
+			break;
+		//GPIO8B
+		case 256 : 
+		case 257 :
+			alt = ((*(grf+GRF_GPIO8B_IOMUX/4))>>((pin%8)*2)) & 0x00000003;
+			break;
+		default:
+			alt=-1; 
+			break;
+	}
+	//RPi alt ("   GPIO  "), "ALT0", "ALT1", "ALT2", "ALT3", "ALT4", "ALT5"
+	//          0      1        2      3        4      5       6       7
+	//RPi alt ("IN", "OUT"), "ALT5", "ALT4", "ALT0", "ALT1", "ALT2", "ALT3"
+	int alts[7] = {0, FSEL_ALT0, FSEL_ALT1, FSEL_ALT2, FSEL_ALT3, FSEL_ALT4, FSEL_ALT5};	
+	if(alt < 7)
+	{
+		alt = alts[alt];
+	}
+    if (alt == 0)
+    {
+		if(pin>=24)
+		{
+			if (*(gpio0[(pin+8)/32]+GPIO_SWPORTA_DDR_OFFSET/4) & 1<<((pin+8)%32))
+				alt = FSEL_OUTP;
+			else
+				alt = FSEL_INPT;
+		}
+		else
+		{
+			if (*(gpio0[pin/32]+GPIO_SWPORTA_DDR_OFFSET/4) & 1<<(pin%32))
+				alt = FSEL_OUTP;
+			else
+				alt = FSEL_INPT;
+		}
+    }
+	return alt;
 }
