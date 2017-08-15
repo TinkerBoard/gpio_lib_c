@@ -71,4 +71,5 @@ void asus_pwm_start(int pwm_ch,int mode,unsigned int range,unsigned int duty);
 void asus_pwm_stop(int pwm_ch);
 void asus_set_gpioClockFreq(int pin, int freq);
 int asus_get_pinAlt(int pin);
+void asus_set_pinAlt(int pin, int alt);
 #endif

@@ -1430,27 +1430,25 @@ void pinEnableED01Pi (int pin)
 
 void pinModeAlt (int pin, int mode)
 {
-  int fSel, shift ;
-
-  if(asusversion == ASUSVER)
-  {
-    printf("Can not set ALT directly\n");
-    return;
-  }
-  if ((pin & PI_GPIO_MASK) == 0)		// On-board pin
-  {
-    /**/ if (wiringPiMode == WPI_MODE_PINS)
-      pin = pinToGpio [pin] ;
-    else if (wiringPiMode == WPI_MODE_PHYS)
-      pin = physToGpio [pin] ;
-    else if (wiringPiMode != WPI_MODE_GPIO)
-      return ;
-
-    fSel  = gpioToGPFSEL [pin] ;
-    shift = gpioToShift  [pin] ;
-
-    *(gpio + fSel) = (*(gpio + fSel) & ~(7 << shift)) | ((mode & 0x7) << shift) ;
-  }
+	#ifndef TINKER_BOARD
+	int fSel, shift ;
+	#endif
+	if ((pin & PI_GPIO_MASK) == 0)		// On-board pin
+	{
+		if (wiringPiMode == WPI_MODE_PINS)
+			pin = pinToGpio [pin] ;
+		else if (wiringPiMode == WPI_MODE_PHYS)
+			pin = physToGpio [pin] ;
+		else if (wiringPiMode != WPI_MODE_GPIO)
+			return ;
+		#ifdef TINKER_BOARD
+		asus_set_pinAlt(pin, mode);
+		#else
+		fSel  = gpioToGPFSEL [pin] ;
+		shift = gpioToShift  [pin] ;
+		*(gpio + fSel) = (*(gpio + fSel) & ~(7 << shift)) | ((mode & 0x7) << shift) ;
+		#endif
+	}
 }
 
 

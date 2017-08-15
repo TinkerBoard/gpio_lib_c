@@ -792,3 +792,129 @@ int asus_get_pinAlt(int pin)
     }
 	return alt;
 }
+
+void SetGpioMode(int pin, int alt)
+{
+	alt = ~alt & 0x3;
+	switch(pin)
+	{
+		//GPIO0
+		case 17 : 
+			*(pmu+PMU_GPIO0C_IOMUX/4) = (*(pmu+PMU_GPIO0C_IOMUX/4) | (0x3 << ((pin % 8)*2))) & (~(alt<<((pin%8)*2)));
+			break;
+		//GPIO1D0:act-led
+		case 48 :
+			break;
+		//GPIO5B
+		case 160 : 
+		case 161 :
+		case 162 :
+		case 163 :			
+		case 164 :
+		case 165 :
+		case 166 :
+		case 167 :
+			*(grf+GRF_GPIO5B_IOMUX/4) = (*(grf+GRF_GPIO5B_IOMUX/4) | (0x03<<((pin%8)*2+16)) | (0x3 << ((pin % 8)*2))) & (~(alt<<((pin%8)*2)));
+			break;
+		
+		//GPIO5C
+		case 168 : 
+		case 169 :
+		case 170 :
+		case 171 :
+			*(grf+GRF_GPIO5C_IOMUX/4) =  (*(grf+GRF_GPIO5C_IOMUX/4) | (0x03<<((pin%8)*2+16)) | (0x3 << ((pin % 8)*2))) & (~(alt<<((pin%8)*2)));
+			break;
+
+		//GPIO6A
+		case 184 : 
+		case 185 :
+		case 187 :
+		case 188 :
+			*(grf+GRF_GPIO6A_IOMUX/4) =  (*(grf+GRF_GPIO6A_IOMUX/4) | (0x03<<((pin%8)*2+16)) | (0x3 << ((pin % 8)*2))) & (~(alt<<((pin%8)*2)));
+			break;
+
+		//GPIO7A7
+		case 223 : 
+			*(grf+GRF_GPIO7A_IOMUX/4) =  (*(grf+GRF_GPIO7A_IOMUX/4) | (0x03<<((pin%8)*2+16)) | (0x3 << ((pin % 8)*2))) & (~(alt<<((pin%8)*2))); 
+			break;
+
+		//GPIO7B
+		case 224 : 
+		case 225 : 
+		case 226 : 
+			*(grf+GRF_GPIO7B_IOMUX/4) =  (*(grf+GRF_GPIO7B_IOMUX/4) | (0x03<<((pin%8)*2+16)) | (0x3 << ((pin % 8)*2))) & (~(alt<<((pin%8)*2))); 
+			break;
+		//GPIO7C
+		case 233 : 
+		case 234 : 
+			*(grf+GRF_GPIO7CL_IOMUX/4) = (*(grf+GRF_GPIO7CL_IOMUX/4) | (0x0f<<(16+(pin%8)*4)) | (0x3 << ((pin % 8)*4))) & (~((alt)<<((pin%8)*4))); 
+			break;
+		case 238 : 			
+		case 239 : 
+			*(grf+GRF_GPIO7CH_IOMUX/4) =  (*(grf+GRF_GPIO7CH_IOMUX/4) | (0x0f<<(16+(pin%8-4)*4)) | (0x3 << ((pin%8-4)*4))) & (~(alt<<((pin%8-4)*4)));  
+			break;
+
+		//GPIO8A
+		case 251 : 
+		case 254 :
+		case 255 :			
+		case 252 : 
+		case 253 :
+			*(grf+GRF_GPIO8A_IOMUX/4) =  (*(grf+GRF_GPIO8A_IOMUX/4) | (0x03<<((pin%8)*2+16)) | (0x3 << ((pin % 8)*2))) & (~(alt<<((pin%8)*2))); 
+			break;
+		//GPIO8B
+		case 256 : 
+		case 257 :
+			*(grf+GRF_GPIO8B_IOMUX/4) = (*(grf+GRF_GPIO8B_IOMUX/4) | (0x03<<((pin%8)*2+16)) | (0x3 << ((pin % 8)*2))) & (~(alt<<((pin%8)*2))); 
+			break;
+		default:
+			printf("wrong gpio\n");
+	}
+}
+
+void asus_set_pinAlt(int pin, int alt)
+{
+	switch(alt)
+	{
+		case FSEL_INPT:
+			SetGpioMode(pin, 0x00);
+			if(pin>=24)
+			{
+				*(gpio0[(pin+8)/32]+GPIO_SWPORTA_DDR_OFFSET/4) &= ~(1<<((pin+8)%32));
+			}
+			else
+			{
+				*(gpio0[pin/32]+GPIO_SWPORTA_DDR_OFFSET/4) &= ~(1<<(pin%32));
+			}
+			break;
+		case FSEL_OUTP:
+			SetGpioMode(pin, 0x00);
+			if(pin>=24)
+			{
+				*(gpio0[(pin+8)/32]+GPIO_SWPORTA_DDR_OFFSET/4) |= (1<<((pin+8)%32));
+			}
+			else
+			{
+				*(gpio0[pin/32]+GPIO_SWPORTA_DDR_OFFSET/4) |= (1<<(pin%32));
+			}
+			break;
+		case FSEL_ALT0:
+			SetGpioMode(pin, 0x01);
+			break;
+		case FSEL_ALT1:
+			SetGpioMode(pin, 0x02);
+			break;
+		case FSEL_ALT2:
+			SetGpioMode(pin, 0x03);
+			break;
+		case FSEL_ALT3:
+			SetGpioMode(pin, 0x04);
+			break;
+		case FSEL_ALT4:
+			SetGpioMode(pin, 0x05);
+			break;
+		case FSEL_ALT5:
+			SetGpioMode(pin, 0x06);
+			break;
+	}
+}
