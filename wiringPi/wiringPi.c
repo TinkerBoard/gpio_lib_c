@@ -1537,7 +1537,7 @@ void pinMode (int pin, int mode)
 			gpioClockSet      (origPin, 1000000) ;
 			#else
 			if ((alt = gpioToGpClkALT0 [pin]) == 0)	// Not a GPIO_CLOCK pin
-			return ;
+				return ;
 			// Set pin to GPIO_CLOCK mode and set the clock frequency to 100KHz
 			*(gpio + fSel) = (*(gpio + fSel) & ~(7 << shift)) | (alt << shift) ;
 			delayMicroseconds (110) ;
