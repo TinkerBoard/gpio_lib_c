@@ -1086,7 +1086,7 @@ void piBoardId (int *model, int *rev, int *mem, int *maker, int *warranty)
 
 int wpiPinToGpio (int wpiPin)
 {
-  return pinToGpio [wpiPin & 63] ;
+	return pinToGpio [wpiPin & 63] ;
 }
 
 
@@ -1099,7 +1099,7 @@ int wpiPinToGpio (int wpiPin)
 
 int physPinToGpio (int physPin)
 {
-  return physToGpio [physPin & 63] ;
+	return physToGpio [physPin & 63] ;
 }
 
 
@@ -1176,25 +1176,20 @@ int getAlt (int pin)
 
 int getPinMode (int pin)
 {
-  int fsel;
-  if(asusversion == ASUSVER)
-  {
-    /**/ if (wiringPiMode == WPI_MODE_PINS)
-      pin = pinToGpio [pin] ;
+	int fsel;
+	#ifdef TINKER_BOARD
+	if (wiringPiMode == WPI_MODE_PINS)
+		pin = pinToGpio [pin] ;
     else if (wiringPiMode == WPI_MODE_PHYS)
-      pin = physToGpio [pin] ;
+		pin = physToGpio [pin] ;
     else if (wiringPiMode != WPI_MODE_GPIO)
-      return 0 ;
-
-    fsel = asus_get_pin_mode(pin) ;
-
+		return 0 ;
+	fsel = asus_get_pin_mode(pin) ;
     return fsel;
-  }
-  else
-  {
+	#else
     printf("This func is only for Asus Tinker.");
     return 0;
-  }
+	#endif
 }
 
 /*
@@ -1234,7 +1229,7 @@ void pwmSetRange (unsigned int range)
 	if ((wiringPiMode == WPI_MODE_PINS) || (wiringPiMode == WPI_MODE_PHYS) || (wiringPiMode == WPI_MODE_GPIO))
 	{
 		#ifdef TINKER_BOARD
-		pwm_range = range;
+		asus_set_pwmRange(range);
 		#else
 		if (RASPBERRY_PI_PERI_BASE == 0)	// Ignore for now
 			return ;
@@ -1260,7 +1255,7 @@ void pwmSetClock (int divisor)
 	if ((wiringPiMode == WPI_MODE_PINS) || (wiringPiMode == WPI_MODE_PHYS) || (wiringPiMode == WPI_MODE_GPIO))
 	{
 		#ifdef TINKER_BOARD
-		pwm_divisor = divisor;
+		asus_set_pwmClock(divisor);
 		#else
 		if (RASPBERRY_PI_PERI_BASE == 0)	// Ignore for now
 			return ;
@@ -1697,10 +1692,7 @@ void pwmWrite (int pin, int value)
 		else if (wiringPiMode != WPI_MODE_GPIO)
 			return ;
 		#ifdef TINKER_BOARD
-		if (pin == PWM2)
-			asus_pwm_start(2,0,pwm_divisor*pwm_range,pwm_divisor*value);
-		else if (pin == PWM3)
-			asus_pwm_start(3,0,pwm_divisor*pwm_range,pwm_divisor*value);
+		asus_pwm_write(pin, value);
 		#else
 		*(pwm + gpioToPwmPort [pin]) = value ;
 		#endif

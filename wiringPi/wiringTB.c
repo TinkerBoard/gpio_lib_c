@@ -610,40 +610,33 @@ void asus_pullUpDnControl (int pin, int pud)
 	}	//switch(pin)
 }
 
-void asus_pwm_set_period(int pwm_ch,unsigned int range)
+void asus_set_pwmRange(unsigned int range)
 {
-	*(pwm+RK3288_PWM0_PERIOD/4+pwm_ch*4) = range;
+	pwm_range = range;
 }
 
-void asus_pwm_set_duty(int pwm_ch,unsigned int duty)
+void asus_set_pwmClock(int divisor)
 {
-	*(pwm+RK3288_PWM0_DUTY/4+pwm_ch*4) = duty;
+	pwm_divisor = divisor;
 }
 
-void asus_pwm_enable(int pwm_ch)
+void asus_pwm_write(int pin, int value)
 {
-	*(pwm+RK3288_PWM0_CTR/4+pwm_ch*4) |= (1<<0); 
-}
-
-void asus_pwm_disable(int pwm_ch)
-{
-	*(pwm+RK3288_PWM0_CTR/4+pwm_ch*4) &= ~(1<<0); 
-}
-
-void asus_pwm_start(int pwm_ch,int mode,unsigned int range,unsigned int duty)
-{
-	int pin;
-	switch (pwm_ch)
+	int pwm_ch;
+	int mode = 0;
+	unsigned int range = pwm_divisor*pwm_range;
+	unsigned int duty = pwm_divisor*value;
+	switch (pin)
 	{
-		case 2:pin=PWM2;break;
-		case 3:pin=PWM3;break;
-		default:pin=0;break;
+		case PWM2:pwm_ch=2;break;
+		case PWM3:pwm_ch=3;break;
+		default:pwm_ch=-1;break;
 	}
 	if(asus_get_pin_mode(pin)==PWM)
 	{
-		asus_pwm_disable(pwm_ch);
-		asus_pwm_set_period(pwm_ch,range);
-		asus_pwm_set_duty(pwm_ch,range-duty);
+		*(pwm+RK3288_PWM0_CTR/4+pwm_ch*4) &= ~(1<<0);	//Disable PWM
+		*(pwm+RK3288_PWM0_PERIOD/4+pwm_ch*4) = range;	//Set period
+		*(pwm+RK3288_PWM0_DUTY/4+pwm_ch*4) = range - duty; //Set duty
 		if(mode == CENTERPWM)
 		{
 			*(pwm+RK3288_PWM0_CTR/4+pwm_ch*4) |= (1<<5);		
@@ -655,17 +648,12 @@ void asus_pwm_start(int pwm_ch,int mode,unsigned int range,unsigned int duty)
 		*(pwm+RK3288_PWM0_CTR/4+pwm_ch*4) |= (1<<1);
 		*(pwm+RK3288_PWM0_CTR/4+pwm_ch*4) &= ~(1<<2);
 		*(pwm+RK3288_PWM0_CTR/4+pwm_ch*4) |= (1<<4);
-		asus_pwm_enable(pwm_ch);
+		*(pwm+RK3288_PWM0_CTR/4+pwm_ch*4) |= (1<<0); //Enable PWM
 	}
 	else
 	{
 		printf("please set this pin to pwmmode first\n");
 	}
-}
-
-void asus_pwm_stop(int pwm_ch)
-{
-	asus_pwm_disable(pwm_ch);
 }
 
 void asus_set_gpioClockFreq(int pin, int freq)
