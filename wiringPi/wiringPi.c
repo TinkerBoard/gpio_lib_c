@@ -655,20 +655,16 @@ static uint8_t gpioToClkDiv [] =
 
 int wiringPiFailure (int fatal, const char *message, ...)
 {
-  va_list argp ;
-  char buffer [1024] ;
-
-  if (!fatal && wiringPiReturnCodes)
-    return -1 ;
-
-  va_start (argp, message) ;
+	va_list argp ;
+	char buffer [1024] ;
+	if (!fatal && wiringPiReturnCodes)
+		return -1 ;
+	va_start (argp, message) ;
     vsnprintf (buffer, 1023, message, argp) ;
-  va_end (argp) ;
-
-  fprintf (stderr, "%s", buffer) ;
-  exit (EXIT_FAILURE) ;
-
-  return 0 ;
+	va_end (argp) ;
+	fprintf (stderr, "%s", buffer) ;
+	exit (EXIT_FAILURE) ;
+	return 0 ;
 }
 
 
@@ -695,11 +691,11 @@ int wiringPiFailure (int fatal, const char *message, ...)
 
 static void piBoardRevOops (const char *why)
 {
-  fprintf (stderr, "piBoardRev: Unable to determine board revision from /proc/cpuinfo\n") ;
-  fprintf (stderr, " -> %s\n", why) ;
-  fprintf (stderr, " ->  You may want to check:\n") ;
-  fprintf (stderr, " ->  http://www.raspberrypi.org/phpBB3/viewtopic.php?p=184410#p184410\n") ;
-  exit (EXIT_FAILURE) ;
+	fprintf (stderr, "piBoardRev: Unable to determine board revision from /proc/cpuinfo\n") ;
+	fprintf (stderr, " -> %s\n", why) ;
+	fprintf (stderr, " ->  You may want to check:\n") ;
+	fprintf (stderr, " ->  http://www.raspberrypi.org/phpBB3/viewtopic.php?p=184410#p184410\n") ;
+	exit (EXIT_FAILURE) ;
 }
 
 int asuspi(void)
@@ -740,22 +736,6 @@ int asuspi(void)
 	return 0 ;
   }
 }//int asuspi(void)
-
-int isAsusPiGpioPin40(int pin) {
-  int i;
-
-  if ((wiringPiMode == WPI_MODE_PINS) || (wiringPiMode == WPI_MODE_PHYS)){
-    if ((pin >= 0) && (pin <= 63))
-      return 1;
-  } else if ((wiringPiMode == WPI_MODE_GPIO) || (wiringPiMode == WPI_MODE_GPIO_SYS)) {
-  for (i = 0; i < 64; i++)
-    if((pinToGpio_AP[i] == pin) && (pin > 0))
-      return 1;
-  }
-  return 0;
-}
-
-
 
 int piBoardRev (void)
 {
@@ -1199,20 +1179,17 @@ int getPinMode (int pin)
 
 void pwmSetMode (int mode)
 {
-  if(asusversion == ASUSVER)
-  {
-    printf("We only have Mark:space mode\n");
-  }
-  else
-  {
-    if ((wiringPiMode == WPI_MODE_PINS) || (wiringPiMode == WPI_MODE_PHYS) || (wiringPiMode == WPI_MODE_GPIO))
-    {
-      if (mode == PWM_MODE_MS)
-        *(pwm + PWM_CONTROL) = PWM0_ENABLE | PWM1_ENABLE | PWM0_MS_MODE | PWM1_MS_MODE ;
-      else
-        *(pwm + PWM_CONTROL) = PWM0_ENABLE | PWM1_ENABLE ;
+	if ((wiringPiMode == WPI_MODE_PINS) || (wiringPiMode == WPI_MODE_PHYS) || (wiringPiMode == WPI_MODE_GPIO))
+	{
+		#ifdef TINKER_BOARD
+		printf("We only have Mark:space mode\n");
+		#else
+		if (mode == PWM_MODE_MS)
+			*(pwm + PWM_CONTROL) = PWM0_ENABLE | PWM1_ENABLE | PWM0_MS_MODE | PWM1_MS_MODE ;
+		else
+			*(pwm + PWM_CONTROL) = PWM0_ENABLE | PWM1_ENABLE ;
+		#endif
     }
-  }
 }
 
 
@@ -1468,7 +1445,7 @@ void pinMode (int pin, int mode)
         shift   = gpioToShift  [pin] ;
         if (mode == INPUT)
 			#ifdef TINKER_BOARD
-            asus_set_pin_mode(pin,INPUT); // Sets bits to zero = input
+            asus_set_pin_mode(pin, INPUT); // Sets bits to zero = input
 			#else
 			*(gpio + fSel) = (*(gpio + fSel) & ~(7 << shift)) ; // Sets bits to zero = input
 			#endif
@@ -1501,6 +1478,7 @@ void pinMode (int pin, int mode)
 			if((pin==PWM2)||(pin==PWM3))
 			{
 				asus_set_pin_mode(pin,PWM_OUTPUT);
+				delayMicroseconds (110) ;
 				pwmSetRange (1024) ;            // Default range of 1024
 				pwmSetClock (124) ;              // 74.25Mhz / 124 = 599KHz
 				return;
@@ -1614,7 +1592,7 @@ int digitalRead (int pin)
 		#ifdef TINKER_BOARD
 		digitalReadValue = asus_digitalRead(pin);
 		#else
-		//RPi's Code had been removed.
+		digitalReadValue = *(gpio + gpioToGPLEV [pin]) & (1 << (pin & 31));
 		#endif
 		if (digitalReadValue != 0)
 			return HIGH ;
@@ -1662,7 +1640,10 @@ void digitalWrite (int pin, int value)
 		#ifdef TINKER_BOARD
 		asus_digitalWrite(pin,value);
 		#else
-		//RPi's Code had been removed.
+		if (value == LOW)
+			*(gpio + gpioToGPCLR [pin]) = 1 << (pin & 31) ;
+		else
+			*(gpio + gpioToGPSET [pin]) = 1 << (pin & 31) ;
 		#endif  
 	}
 	else
@@ -1913,16 +1894,16 @@ int wiringPiISR (int pin, int mode, void (*function)(void))
 	int   count, i ;
 	char  c ;
 	int   bcmGpioPin ;
-	int boardRev ;
-
-	boardRev = piBoardRev () ;
-	if (boardRev == ASUSVER) {
-		if (!isAsusPiGpioPin40(pin))
-			return wiringPiFailure (WPI_FATAL, "wiringPiISR: pin must be GPIO40Pin (%d)\n", pin) ;
-	} else {
-		if ((pin < 0) || (pin > 63))
-			return wiringPiFailure (WPI_FATAL, "wiringPiISR: pin must be 0-63 (%d)\n", pin) ;
-	}
+	#ifdef TINKER_BOARD
+	if ((((wiringPiMode == WPI_MODE_PINS) || (wiringPiMode == WPI_MODE_PHYS)) && ((pin < 0) || (pin > 63))) ||
+	    (((wiringPiMode == WPI_MODE_GPIO) || (wiringPiMode == WPI_MODE_GPIO_SYS)) && ((pin < 0) || (pin > 257))))
+	{
+		return wiringPiFailure (WPI_FATAL, "wiringPiISR: pin must be GPIO40Pin (%d)\n", pin) ;
+	} 
+	#else
+	if ((pin < 0) || (pin > 63))
+		return wiringPiFailure (WPI_FATAL, "wiringPiISR: pin must be 0-63 (%d)\n", pin) ;
+	#endif
 
 	/**/ if (wiringPiMode == WPI_MODE_UNINITIALISED)
 		return wiringPiFailure (WPI_FATAL, "wiringPiISR: wiringPi has not been initialised. Unable to continue.\n") ;
@@ -1958,12 +1939,12 @@ int wiringPiISR (int pin, int mode, void (*function)(void))
 			/**/ if (access ("/usr/local/bin/gpio", X_OK) == 0)
 			{
 				execl ("/usr/local/bin/gpio", "gpio", "edge", pinS, modeS, (char *)NULL) ;
-					return wiringPiFailure (WPI_FATAL, "wiringPiISR: execl failed: %s\n", strerror (errno)) ;
+				return wiringPiFailure (WPI_FATAL, "wiringPiISR: execl failed: %s\n", strerror (errno)) ;
 			}
 			else if (access ("/usr/bin/gpio", X_OK) == 0)
 			{
 				execl ("/usr/bin/gpio", "gpio", "edge", pinS, modeS, (char *)NULL) ;
-					return wiringPiFailure (WPI_FATAL, "wiringPiISR: execl failed: %s\n", strerror (errno)) ;
+				return wiringPiFailure (WPI_FATAL, "wiringPiISR: execl failed: %s\n", strerror (errno)) ;
 			}
 			else
 				return wiringPiFailure (WPI_FATAL, "wiringPiISR: Can't find gpio program\n") ;
