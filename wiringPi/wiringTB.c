@@ -629,8 +629,7 @@ int asus_get_pwm_value(int pin)
 	{
 		range = *(pwm+RK3288_PWM0_PERIOD/4+pwm_ch*4);	//Get period
 		duty = range - *(pwm+RK3288_PWM0_DUTY/4+pwm_ch*4); //Get duty
-		value = (int)(duty / pwm_divisor);
-		return value;
+		return duty;
 	}
 	else
 	{
@@ -642,7 +641,12 @@ void asus_set_pwmRange(unsigned int range)
 {
 	int pwm2_value = asus_get_pwm_value(PWM2);
 	int pwm3_value = asus_get_pwm_value(PWM3);
-	pwm_range = range;
+	*(pwm+RK3288_PWM0_CTR/4+2*4) &= ~(1<<0);	//Disable PWM2
+	*(pwm+RK3288_PWM0_CTR/4+3*4) &= ~(1<<0);	//Disable PWM3		
+	*(pwm+RK3288_PWM0_PERIOD/4+2*4) = range;	//Set period PWM2
+	*(pwm+RK3288_PWM0_PERIOD/4+3*4) = range;	//Set period PWM3
+	*(pwm+RK3288_PWM0_CTR/4+2*4) |= (1<<0); //Enable PWM2
+	*(pwm+RK3288_PWM0_CTR/4+3*4) |= (1<<0); //Enable PWM3
 	if(pwm2_value != -1)
 		asus_pwm_write(PWM2, pwm2_value);
 	if(pwm3_value != -1)
@@ -651,21 +655,19 @@ void asus_set_pwmRange(unsigned int range)
 
 void asus_set_pwmClock(int divisor)
 {
-	int pwm2_value = asus_get_pwm_value(PWM2);
-	int pwm3_value = asus_get_pwm_value(PWM3);
-	pwm_divisor = divisor;
-	if(pwm2_value != -1)
-		asus_pwm_write(PWM2, pwm2_value);
-	if(pwm3_value != -1)
-		asus_pwm_write(PWM3, pwm3_value);
+	*(pwm+RK3288_PWM0_CTR/4+2*4) &= ~(1<<0);	//Disable PWM2
+	*(pwm+RK3288_PWM0_CTR/4+3*4) &= ~(1<<0);	//Disable PWM3	
+	*(pwm+RK3288_PWM0_CTR/4+2*4) = (*(pwm+RK3288_PWM0_CTR/4+2*4) & ~(0xff << 16)) | (divisor << 16) | (1<<9) ;
+	*(pwm+RK3288_PWM0_CTR/4+3*4) = (*(pwm+RK3288_PWM0_CTR/4+3*4) & ~(0xff << 16)) | (divisor << 16) | (1<<9) ;
+	*(pwm+RK3288_PWM0_CTR/4+2*4) |= (1<<0); //Enable PWM2
+	*(pwm+RK3288_PWM0_CTR/4+3*4) |= (1<<0); //Enable PWM3
 }
 
 void asus_pwm_write(int pin, int value)
 {
 	int pwm_ch;
 	int mode = 0;
-	unsigned int range = pwm_divisor*pwm_range;
-	unsigned int duty = pwm_divisor*value;
+	unsigned int range;
 	switch (pin)
 	{
 		case PWM2:pwm_ch=2;break;
@@ -674,9 +676,9 @@ void asus_pwm_write(int pin, int value)
 	}
 	if(asus_get_pin_mode(pin)==PWM)
 	{
+		range = *(pwm+RK3288_PWM0_PERIOD/4+pwm_ch*4);
 		*(pwm+RK3288_PWM0_CTR/4+pwm_ch*4) &= ~(1<<0);	//Disable PWM
-		*(pwm+RK3288_PWM0_PERIOD/4+pwm_ch*4) = range;	//Set period
-		*(pwm+RK3288_PWM0_DUTY/4+pwm_ch*4) = range - duty; //Set duty
+		*(pwm+RK3288_PWM0_DUTY/4+pwm_ch*4) = range - value; //Set duty
 		if(mode == CENTERPWM)
 		{
 			*(pwm+RK3288_PWM0_CTR/4+pwm_ch*4) |= (1<<5);		
