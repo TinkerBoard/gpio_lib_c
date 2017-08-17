@@ -112,11 +112,9 @@ int main()
     showAPIStatus("pinMode [Check Pin 33 (Origial Pulse) by Oscilloscop]", 1);
     PAUSE
     pwmSetClock(248);
-    pwmWrite(23, 512);
     showAPIStatus("pwmSetClock [Check Pin 33 (Changed Pulse) by Oscilloscop]", 1);
     PAUSE
     pwmSetRange(2048);
-    pwmWrite(23, 512);
     showAPIStatus("pwmSetRange [Check Pin 33 (Changed Pulse) by Oscilloscop]", 1);
     PAUSE
     pwmWrite(23, 1024);
@@ -139,11 +137,9 @@ int main()
     showAPIStatus("pinMode [Check Pin 32 (Origial Pulse) by Oscilloscop]", 1);
     PAUSE
     pwmSetClock(248);
-    pwmWrite(26, 512);
     showAPIStatus("pwmSetClock [Check Pin 32 (Changed Pulse) by Oscilloscop]", 1);
     PAUSE
     pwmSetRange(2048);
-    pwmWrite(26, 512);
     showAPIStatus("pwmSetRange [Check Pin 32 (Changed Pulse) by Oscilloscop]", 1);
     PAUSE
     pwmWrite(26, 1024);

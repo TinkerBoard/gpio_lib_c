@@ -613,14 +613,44 @@ void asus_pullUpDnControl (int pin, int pud)
 	}	//switch(pin)
 }
 
+int asus_get_pwm_value(int pin)
+{
+	int pwm_ch;
+	unsigned int range;
+	unsigned int duty;
+	int value;
+	switch (pin)
+	{
+		case PWM2:pwm_ch=2;break;
+		case PWM3:pwm_ch=3;break;
+		default:pwm_ch=-1;break;
+	}
+	if(asus_get_pin_mode(pin)==PWM)
+	{
+		range = *(pwm+RK3288_PWM0_PERIOD/4+pwm_ch*4);	//Get period
+		duty = range - *(pwm+RK3288_PWM0_DUTY/4+pwm_ch*4); //Get duty
+		value = (int)(duty / pwm_divisor);
+		return value;
+	}
+	else
+	{
+		printf("please set this pin to pwmmode first\n");
+		return -1; 
+	}
+}
+
 void asus_set_pwmRange(unsigned int range)
 {
 	pwm_range = range;
+	asus_pwm_write(PWM2, asus_get_pwm_value(PWN2));
+	asus_pwm_write(PWM3, asus_get_pwm_value(PWM3));
 }
 
 void asus_set_pwmClock(int divisor)
 {
 	pwm_divisor = divisor;
+	asus_pwm_write(PWM2, asus_get_pwm_value(PWN2));
+	asus_pwm_write(PWM3, asus_get_pwm_value(PWM3));
 }
 
 void asus_pwm_write(int pin, int value)
