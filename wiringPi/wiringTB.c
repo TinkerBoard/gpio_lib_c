@@ -634,23 +634,30 @@ int asus_get_pwm_value(int pin)
 	}
 	else
 	{
-		printf("please set this pin to pwmmode first\n");
 		return -1; 
 	}
 }
 
 void asus_set_pwmRange(unsigned int range)
 {
+	int pwm2_value = asus_get_pwm_value(PWM2);
+	int pwm3_value = asus_get_pwm_value(PWM3);
 	pwm_range = range;
-	asus_pwm_write(PWM2, asus_get_pwm_value(PWN2));
-	asus_pwm_write(PWM3, asus_get_pwm_value(PWM3));
+	if(pwm2_value != -1)
+		asus_pwm_write(PWM2, pwm2_value);
+	if(pwm3_value != -1)
+		asus_pwm_write(PWM3, pwm3_value);
 }
 
 void asus_set_pwmClock(int divisor)
 {
+	int pwm2_value = asus_get_pwm_value(PWM2);
+	int pwm3_value = asus_get_pwm_value(PWM3);
 	pwm_divisor = divisor;
-	asus_pwm_write(PWM2, asus_get_pwm_value(PWN2));
-	asus_pwm_write(PWM3, asus_get_pwm_value(PWM3));
+	if(pwm2_value != -1)
+		asus_pwm_write(PWM2, pwm2_value);
+	if(pwm3_value != -1)
+		asus_pwm_write(PWM3, pwm3_value);
 }
 
 void asus_pwm_write(int pin, int value)
