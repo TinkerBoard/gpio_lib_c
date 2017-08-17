@@ -4,9 +4,6 @@
 #include "RKIO.h"
 #include "wiringPi.h"
 
-static int pwm_divisor = 124;
-static int pwm_range = 1024;
-
 static int physToGpio_AP [64] =
 {
 	-1,          		// 0

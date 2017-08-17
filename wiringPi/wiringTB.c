@@ -38,6 +38,9 @@ static volatile unsigned *pmu;
 static void *cru_map;
 static volatile unsigned *cru;
 
+static int pwm_divisor = 124;
+static int pwm_range = 1024;
+
 void tinker_board_setup(void)
 {
 	int i;

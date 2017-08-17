@@ -95,7 +95,6 @@
 
 #ifdef TINKER_BOARD
 #define	PI_GPIO_MASK	(0xFFFFFE00)
-#include "RKIO.h"
 #include "wiringTB.h"
 #else
 #define	PI_GPIO_MASK	(0xFFFFFFC0)
