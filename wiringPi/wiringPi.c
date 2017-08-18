@@ -1656,11 +1656,10 @@ void pwmToneWrite (int pin, int freq)
 
 void digitalWriteByte (int value)
 {
-	uint32_t pinSet = 0 ;
-	uint32_t pinClr = 0 ;
+	
 	int mask = 1 ;
 	int pin ;
-
+	#ifdef TINKER_BOARD
 	/**/ if (wiringPiMode == WPI_MODE_GPIO_SYS||wiringPiMode == WPI_MODE_GPIO)
 	{
 		for (pin = 0 ; pin < 8 ; ++pin)
@@ -1692,6 +1691,32 @@ void digitalWriteByte (int value)
 			mask <<= 1 ;
 		}
 	}
+	#else
+	uint32_t pinSet = 0 ;
+	uint32_t pinClr = 0 ;
+	/**/ if (wiringPiMode == WPI_MODE_GPIO_SYS)
+	{
+		for (pin = 0 ; pin < 8 ; ++pin)
+		{
+			digitalWrite (pinToGpio [pin], value & mask) ;
+			mask <<= 1 ;
+		}
+		return ;
+	}
+	else
+	{
+		for (pin = 0 ; pin < 8 ; ++pin)
+		{
+			if ((value & mask) == 0)
+				pinClr |= (1 << pinToGpio [pin]) ;
+			else
+				pinSet |= (1 << pinToGpio [pin]) ;
+			mask <<= 1 ;
+		}
+		*(gpio + gpioToGPCLR [0]) = pinClr ;
+		*(gpio + gpioToGPSET [0]) = pinSet ;
+	}
+	#endif
 }
 
 
