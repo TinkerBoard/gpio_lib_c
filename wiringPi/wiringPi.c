@@ -2131,16 +2131,23 @@ int wiringPiSetup (void)
 			printf ("wiringPi: Using /dev/gpiomem\n") ;
 	}
 	boardRev = piBoardRev () ;
-	if (boardRev == ASUSVER)	// A, B, Rev 2, B+, CM, Pi2
-	{
-		pinToGpio =  pinToGpio_AP ;
-		physToGpio = physToGpio_AP ;
-	}
-	else 				// A, B, Rev 1, 1.1 
+	#ifdef TINKER_BOARD
+	pinToGpio =  pinToGpio_AP ;
+	physToGpio = physToGpio_AP ;
+	#else
+	/*if (piGpioLayout () == 1)	// A, B, Rev 1, 1.1
 	{
 		pinToGpio =  pinToGpioR1 ;
 		physToGpio = physToGpioR1 ;
 	}
+	else 					// A2, B2, A+, B+, CM, Pi2, Pi3, Zero
+	{
+		pinToGpio =  pinToGpioR2 ;
+		physToGpio = physToGpioR2 ;
+	}*/
+	pinToGpio =  pinToGpioR1 ;
+	physToGpio = physToGpioR1 ;
+	#endif
 	// Open the master /dev/ memory control device
 	// Open the master /dev/memory device
 	#ifdef TINKER_BOARD
@@ -2243,46 +2250,43 @@ int wiringPiSetupPhys (void)
 
 int wiringPiSetupSys (void)
 {
-  int boardRev ;
-  int pin ;
-  char fName [128] ;
-
-  if (getenv (ENV_DEBUG) != NULL)
-    wiringPiDebug = TRUE ;
-
-  if (getenv (ENV_CODES) != NULL)
-    wiringPiReturnCodes = TRUE ;
-
-  if (wiringPiDebug)
-    printf ("wiringPi: wiringPiSetupSys called\n") ;
-
-  boardRev = piBoardRev () ;
-
-  if (boardRev == ASUSVER)
-  {
-     pinToGpio =  pinToGpio_AP ;
-    physToGpio = physToGpio_AP ;
-  }
-  else
-  {
-     pinToGpio =  pinToGpioR1 ;
-    physToGpio = physToGpioR1 ;
-  }
-
-// Open and scan the directory, looking for exported GPIOs, and pre-open
-//	the 'value' interface to speed things up for later
-  
-  for (pin = 0 ; pin < 64 ; ++pin)
-  {
-    if (pinToGpio[pin] != -1) {
-      sprintf (fName, "/sys/class/gpio/gpio%d/value", pinToGpio[pin]) ;
-      sysFds [pinToGpio[pin]] = open (fName, O_RDWR) ;
-    }
-  }
-
-  initialiseEpoch () ;
-
-  wiringPiMode = WPI_MODE_GPIO_SYS ;
-
-  return 0 ;
+	int boardRev ;
+	int pin ;
+	char fName [128] ;
+	if (getenv (ENV_DEBUG) != NULL)
+		wiringPiDebug = TRUE ;
+	if (getenv (ENV_CODES) != NULL)
+		wiringPiReturnCodes = TRUE ;
+	if (wiringPiDebug)
+		printf ("wiringPi: wiringPiSetupSys called\n") ;
+	boardRev = piBoardRev () ;
+	#ifdef TINKER_BOARD
+	pinToGpio =  pinToGpio_AP ;
+	physToGpio = physToGpio_AP ;
+	#else
+	/*if (piGpioLayout () == 1)	// A, B, Rev 1, 1.1
+	{
+		pinToGpio =  pinToGpioR1 ;
+		physToGpio = physToGpioR1 ;
+	}
+	else 					// A2, B2, A+, B+, CM, Pi2, Pi3, Zero
+	{
+		pinToGpio =  pinToGpioR2 ;
+		physToGpio = physToGpioR2 ;
+	}*/
+	pinToGpio =  pinToGpioR1 ;
+	physToGpio = physToGpioR1 ;
+	#endif
+	// Open and scan the directory, looking for exported GPIOs, and pre-open
+	//	the 'value' interface to speed things up for later
+	for (pin = 0 ; pin < 64 ; ++pin)
+	{
+		if (pinToGpio[pin] != -1) {
+			sprintf (fName, "/sys/class/gpio/gpio%d/value", pinToGpio[pin]) ;
+			sysFds [pinToGpio[pin]] = open (fName, O_RDWR) ;
+		}
+	}
+	initialiseEpoch () ;
+	wiringPiMode = WPI_MODE_GPIO_SYS ;
+	return 0 ;
 }
