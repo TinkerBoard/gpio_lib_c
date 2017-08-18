@@ -2130,8 +2130,8 @@ int wiringPiSetup (void)
 	}
 	boardRev = piBoardRev () ;
 	#ifdef TINKER_BOARD
-	pinToGpio =  pinToGpio_AP ;
-	physToGpio = physToGpio_AP ;
+	pinToGpio =  asus_get_pinToGpio(boardRev);
+	physToGpio = asus_get_physToGpio(boardRev);
 	#else
 	/*if (piGpioLayout () == 1)	// A, B, Rev 1, 1.1
 	{
@@ -2149,7 +2149,7 @@ int wiringPiSetup (void)
 	// Open the master /dev/ memory control device
 	// Open the master /dev/memory device
 	#ifdef TINKER_BOARD
-	tinker_board_setup();
+	tinker_board_setup(boardRev);
 	#else
 	// Map the individual hardware components
 	// GPIO:
@@ -2259,8 +2259,8 @@ int wiringPiSetupSys (void)
 		printf ("wiringPi: wiringPiSetupSys called\n") ;
 	boardRev = piBoardRev () ;
 	#ifdef TINKER_BOARD
-	pinToGpio =  pinToGpio_AP ;
-	physToGpio = physToGpio_AP ;
+	pinToGpio =  asus_get_pinToGpio(boardRev);
+	physToGpio = asus_get_physToGpio(boardRev);
 	#else
 	/*if (piGpioLayout () == 1)	// A, B, Rev 1, 1.1
 	{
