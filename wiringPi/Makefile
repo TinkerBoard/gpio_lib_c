@@ -38,7 +38,7 @@ DYNAMIC=libwiringPi.so.$(VERSION)
 DEBUG	= -O2
 CC	= gcc
 INCLUDE	= -I.
-DEFS	= -D_GNU_SOURCE -DTINKER_BOARD
+DEFS	= -D_GNU_SOURCE
 CFLAGS	= $(DEBUG) $(DEFS) -Wformat=2 -Wall -Winline $(INCLUDE) -pipe -fPIC
 
 LIBS    =

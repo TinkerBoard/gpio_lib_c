@@ -1611,10 +1611,10 @@ void analogWrite (int pin, int value)
 
 void pwmToneWrite (int pin, int freq)
 {
-	int range ;
 	#ifdef TINKER_BOARD
 	printf("If you want to use hardware pwm ,please read readme\n");	
 	#else
+	int range ;
 	if (RASPBERRY_PI_PERI_BASE == 0)	// Ignore for now
 		return ;
 	if (freq == 0)
@@ -1989,7 +1989,9 @@ unsigned int micros (void)
 
 int wiringPiSetup (void)
 {
+	#ifndef TINKER_BOARD
 	int   fd ;
+	#endif
 	int   model, rev, mem, maker, overVolted ;
 	if (getenv (ENV_DEBUG) != NULL)
 		wiringPiDebug = TRUE ;
