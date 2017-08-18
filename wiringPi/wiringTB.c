@@ -545,7 +545,7 @@ void asus_pullUpDnControl (int pin, int pud)
 	{
 		//GPIO0
 		case 17 : 
-			*(pmu+PMU_GPIO0C_P/4) = (*(grf+PMU_GPIO0C_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));
+			*(pmu+PMU_GPIO0C_P/4) = ((*(grf+PMU_GPIO0C_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));
 			break;
 
 		//GPIO5B
@@ -557,7 +557,7 @@ void asus_pullUpDnControl (int pin, int pud)
 		case 165 :
 		case 166 :
 		case 167 :
-			*(grf+GRF_GPIO5B_P/4) = (*(grf+GRF_GPIO5B_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));
+			*(grf+GRF_GPIO5B_P/4) = ((*(grf+GRF_GPIO5B_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));
 			break;
 		
 		//GPIO5C
@@ -565,7 +565,7 @@ void asus_pullUpDnControl (int pin, int pud)
 		case 169 :
 		case 170 :
 		case 171 :
-			*(grf+GRF_GPIO5C_P/4) = (*(grf+GRF_GPIO5C_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));
+			*(grf+GRF_GPIO5C_P/4) = ((*(grf+GRF_GPIO5C_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));
 			break;
 
 		//GPIO6A
@@ -573,26 +573,26 @@ void asus_pullUpDnControl (int pin, int pud)
 		case 185 :
 		case 187 :
 		case 188 :
-			*(grf+GRF_GPIO6A_P/4) = (*(grf+GRF_GPIO6A_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));
+			*(grf+GRF_GPIO6A_P/4) = ((*(grf+GRF_GPIO6A_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));
 			break;
 
 		//GPIO7A7
 		case 223 : 
-			*(grf+GRF_GPIO7A_P/4) = (*(grf+GRF_GPIO7A_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2)); 
+			*(grf+GRF_GPIO7A_P/4) = ((*(grf+GRF_GPIO7A_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2)); 
 			break;
 
 		//GPIO7B
 		case 224 : 
 		case 225 : 
 		case 226 : 
-			*(grf+GRF_GPIO7B_P/4) = (*(grf+GRF_GPIO7B_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2)); 
+			*(grf+GRF_GPIO7B_P/4) = ((*(grf+GRF_GPIO7B_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2)); 
 			break;
 		//GPIO7C
 		case 233 : 
 		case 234 : 			
 		case 238 : 			
 		case 239 : 
-			*(grf+GRF_GPIO7C_P/4) = (*(grf+GRF_GPIO7C_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));  
+			*(grf+GRF_GPIO7C_P/4) = ((*(grf+GRF_GPIO7C_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));  
 			break;
 
 		//GPIO8A
@@ -601,12 +601,12 @@ void asus_pullUpDnControl (int pin, int pud)
 		case 255 :			
 		case 252 : 
 		case 253 :
-			*(grf+GRF_GPIO8A_P/4) = (*(grf+GRF_GPIO8A_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2)); 
+			*(grf+GRF_GPIO8A_P/4) = ((*(grf+GRF_GPIO8A_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2)); 
 			break;
 		//GPIO8B
 		case 256 : 
 		case 257 :
-			*(grf+GRF_GPIO8B_P/4) = (*(grf+GRF_GPIO8B_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2)); 
+			*(grf+GRF_GPIO8B_P/4) = ((*(grf+GRF_GPIO8B_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2)); 
 			break;
 		default:
 			printf("wrong gpio\n");
