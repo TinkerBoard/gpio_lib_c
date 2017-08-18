@@ -187,101 +187,71 @@ static void _doLoadUsage (char *argv [])
 
 static void doLoad (int argc, char *argv [])
 {
-  char *module1, *module2 ;
-  char cmd [80] ;
-  char *file1, *file2 ;
-  char args1 [32], args2 [32] ;
-
-  //checkDevTree (argv) ;
-
-  if (argc < 3)
-    _doLoadUsage (argv) ;
-
-  args1 [0] = args2 [0] = 0 ;
-  if(ASUSVER ==  piBoardRev())
-  {
+	char *module1, *module2 ;
+	char cmd [80] ;
+	char *file1, *file2 ;
+	char args1 [32], args2 [32] ;
+	//checkDevTree (argv) ;
+	if (argc < 3)
+		_doLoadUsage (argv) ;
+	args1 [0] = args2 [0] = 0 ;
 	if (strcasecmp (argv [2], "spi") == 0)
    	{
-    		module1 = "spidev" ;
-    		module2 = "spi0_rockchip" ;
-    		file1  = "/dev/spidev0.0" ;
-    		file2  = "/dev/spidev0.1" ;
-    		if (argc == 4)
+		module1 = "spidev" ;
+		#ifdef TINKER_BOARD
+		module2 = "spi0_rockchip" ;
+		file1  = "/dev/spidev2.0" ;
+		file2  = "/dev/spidev2.1" ;
+		#else
+		module2 = "spi_bcm2708" ;
+		file1  = "/dev/spidev0.0" ;
+		file2  = "/dev/spidev0.1" ;
+		#endif
+		if (argc == 4)
    		{
-      			fprintf (stderr, "%s: Unable to set the buffer size now. Load aborted. Please see the man page.\n", argv [0]) ;
-      			exit (1) ;
-    		}
-    		else if (argc > 4)
-      			_doLoadUsage (argv) ;
-   	}//if (strcasecmp (argv [2], "spi") == 0)
-    	else if (strcasecmp (argv [2], "i2c") == 0)
-    	{
-      		module1 = "i2c_dev" ;
-      		module2 = "i2c_rk3x_i2c1" ;
-      		file1  = "/dev/i2c-0" ;
-      		file2  = "/dev/i2c-1" ;
-      		if (argc == 4)
-      		sprintf (args2, " baudrate=%d", atoi (argv [3]) * 1000) ;
-      		else if (argc > 4)
-      		_doLoadUsage (argv) ;
-    	}
-    	else
-    	 _doLoadUsage (argv) ;
-
-  }//if(ASUSVER ==  piBoardRev())
-  else
-  { 
-   if (strcasecmp (argv [2], "spi") == 0)
-   {
-    	module1 = "spidev" ;
-    	module2 = "spi_bcm2708" ;
-    	file1  = "/dev/spidev0.0" ;
-    	file2  = "/dev/spidev0.1" ;
-    	if (argc == 4)
-   	{
-      		fprintf (stderr, "%s: Unable to set the buffer size now. Load aborted. Please see the man page.\n", argv [0]) ;
-      		exit (1) ;
+			fprintf (stderr, "%s: Unable to set the buffer size now. Load aborted. Please see the man page.\n", argv [0]) ;
+			exit (1) ;
     	}
     	else if (argc > 4)
-      		_doLoadUsage (argv) ;
-    }//if (strcasecmp (argv [2], "spi") == 0)
-    else if (strcasecmp (argv [2], "i2c") == 0)
-    {
-      	module1 = "i2c_dev" ;
-      	module2 = "i2c_bcm2708" ;
+			_doLoadUsage (argv) ;
+   	}
+	else if (strcasecmp (argv [2], "i2c") == 0)
+	{
+		module1 = "i2c_dev" ;
+		#ifdef TINKER_BOARD
+		module2 = "i2c_rk3x_i2c1" ;
+		file1  = "/dev/i2c-1" ;
+		file2  = "/dev/i2c-4" ;
+		#else
+		module2 = "i2c_bcm2708" ;
       	file1  = "/dev/i2c-0" ;
       	file2  = "/dev/i2c-1" ;
-      	if (argc == 4)
-      	sprintf (args2, " baudrate=%d", atoi (argv [3]) * 1000) ;
-      	else if (argc > 4)
-      	_doLoadUsage (argv) ;
+		#endif
+		if (argc == 4)
+			sprintf (args2, " baudrate=%d", atoi (argv [3]) * 1000) ;
+		else if (argc > 4)
+			_doLoadUsage (argv) ;
     }
     else
-    _doLoadUsage (argv) ;
-  }////if(ASUSVER ==  piBoardRev() else if
-	
-  if (!moduleLoaded (module1))
-  {
-    sprintf (cmd, "/sbin/modprobe %s%s", module1, args1) ;
-    system (cmd) ;
-  }
-
-  if (!moduleLoaded (module2))
-  {
-    sprintf (cmd, "/sbin/modprobe %s%s", module2, args2) ;
-    system (cmd) ;
-  }
- 
-  if (!moduleLoaded (module2))
-  {
-    fprintf (stderr, "%s: Unable to load %s\n", argv [0], module2) ;
-    exit (1) ;
-  }
-
-  sleep (1) ;	// To let things get settled
-
-  changeOwner (argv [0], file1) ;
-  changeOwner (argv [0], file2) ;
+		_doLoadUsage (argv) ;
+	if (!moduleLoaded (module1))
+	{
+		sprintf (cmd, "/sbin/modprobe %s%s", module1, args1) ;
+		system (cmd) ;
+	}
+	if (!moduleLoaded (module2))
+	{
+		sprintf (cmd, "/sbin/modprobe %s%s", module2, args2) ;
+		system (cmd) ;
+	}
+	if (!moduleLoaded (module2))
+	{
+		fprintf (stderr, "%s: Unable to load %s\n", argv [0], module2) ;
+		exit (1) ;
+	}
+	sleep (1) ;	// To let things get settled
+	changeOwner (argv [0], file1) ;
+	changeOwner (argv [0], file2) ;
 }
 
 
@@ -299,38 +269,41 @@ static void _doUnLoadUsage (char *argv [])
 
 static void doUnLoad (int argc, char *argv [])
 {
-  char *module1, *module2 ;
-  char cmd [80] ;
-
-  checkDevTree (argv) ;
-
-  if (argc != 3)
-    _doUnLoadUsage (argv) ;
-
-  /**/ if (strcasecmp (argv [2], "spi") == 0)
-  {
-    module1 = "spidev" ;
-    module2 = "spi_bcm2708" ;
-  }
-  else if (strcasecmp (argv [2], "i2c") == 0)
-  {
-    module1 = "i2c_dev" ;
-    module2 = "i2c_bcm2708" ;
-  }
-  else
-    _doUnLoadUsage (argv) ;
-
-  if (moduleLoaded (module1))
-  {
-    sprintf (cmd, "/sbin/rmmod %s", module1) ;
-    system (cmd) ;
-  }
-
-  if (moduleLoaded (module2))
-  {
-    sprintf (cmd, "/sbin/rmmod %s", module2) ;
-    system (cmd) ;
-  }
+	char *module1, *module2 ;
+	char cmd [80] ;
+	checkDevTree (argv) ;
+	if (argc != 3)
+		_doUnLoadUsage (argv) ;
+	if (strcasecmp (argv [2], "spi") == 0)
+	{
+		module1 = "spidev" ;
+		#ifdef TINKER_BOARD
+		module2 = "spi0_rockchip" ;
+		#else
+		module2 = "spi_bcm2708" ;
+		#endif
+	}
+	else if (strcasecmp (argv [2], "i2c") == 0)
+	{
+		module1 = "i2c_dev" ;
+		#ifdef TINKER_BOARD
+		module2 = "i2c_rk3x_i2c1" ;
+		#else
+		module2 = "i2c_bcm2708" ;
+		#endif
+	}
+	else
+		_doUnLoadUsage (argv) ;
+	if (moduleLoaded (module1))
+	{
+		sprintf (cmd, "/sbin/rmmod %s", module1) ;
+		system (cmd) ;
+	}
+	if (moduleLoaded (module2))
+	{
+		sprintf (cmd, "/sbin/rmmod %s", module2) ;
+		system (cmd) ;
+	}
 }
 
 
@@ -731,7 +704,7 @@ void doMode (int argc, char *argv [])
   else if (strcasecmp (mode, "out")     == 0) pinMode         (pin, OUTPUT) ;
   else if (strcasecmp (mode, "output")  == 0) pinMode         (pin, OUTPUT) ;
   else if (strcasecmp (mode, "pwm")     == 0) pinMode         (pin, PWM_OUTPUT) ;
-  //else if (strcasecmp (mode, "pwmTone") == 0) pinMode         (pin, PWM_TONE_OUTPUT) ;
+  else if (strcasecmp (mode, "pwmTone") == 0) pinMode         (pin, PWM_TONE_OUTPUT) ;
   else if (strcasecmp (mode, "clock")   == 0) pinMode         (pin, GPIO_CLOCK) ;
   else if (strcasecmp (mode, "up")      == 0) pullUpDnControl (pin, PUD_UP) ;
   else if (strcasecmp (mode, "down")    == 0) pullUpDnControl (pin, PUD_DOWN) ;
@@ -1248,7 +1221,6 @@ static void doVersion (char *argv [])
 int main (int argc, char *argv [])
 {
   int i ;
-	int model, rev, mem, maker, warranty ;
   if (getenv ("WIRINGPI_DEBUG") != NULL)
   {
     printf ("gpio: wiringPi debug mode enabled\n") ;

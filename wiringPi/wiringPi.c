@@ -1102,8 +1102,12 @@ void pwmSetRange (unsigned int range)
 
 void pwmSetClock (int divisor)
 {
+	#ifdef TINKER_BOARD
+	divisor &= 0xff ;
+	#else
 	uint32_t pwm_control ;
 	divisor &= 4095 ;
+	#endif
 	if ((wiringPiMode == WPI_MODE_PINS) || (wiringPiMode == WPI_MODE_PHYS) || (wiringPiMode == WPI_MODE_GPIO))
 	{
 		#ifdef TINKER_BOARD
@@ -1145,8 +1149,8 @@ void pwmSetClock (int divisor)
 
 void gpioClockSet (int pin, int freq)
 {
-	int divi, divr, divf ;
 	#ifndef TINKER_BOARD
+	int divi, divr, divf ;
 	pin &= 63;
 	#endif
 	if (wiringPiMode == WPI_MODE_PINS)
@@ -1347,6 +1351,7 @@ void pinMode (int pin, int mode)
 		else if (mode == PWM_TONE_OUTPUT)
 		{
 			#ifdef TINKER_BOARD
+			pinMode (origPin, PWM_OUTPUT) ;
 			#else
 			pinMode (origPin, PWM_OUTPUT) ;	// Call myself to enable PWM mode
 			pwmSetMode (PWM_MODE_MS) ;

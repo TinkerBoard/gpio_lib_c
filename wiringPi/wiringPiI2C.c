@@ -221,7 +221,7 @@ int wiringPiI2CSetup (const int devId)
   int rev ;
   const char *device ;
 
-  rev = piBoardRev () ;
+  rev = piGpioLayout () ;
 
   if (rev == 1)
     device = "/dev/i2c-0" ;
@@ -233,11 +233,7 @@ int wiringPiI2CSetup (const int devId)
 
 int MiarmI2CSetup (const int i2cid,const int devId)
 {
-  int rev ;
   const char *device ;
-
-  rev = piBoardRev () ;
-
   if (i2cid == 1)
     device = "/dev/i2c-1" ;
   else if(i2cid == 4)

@@ -165,9 +165,15 @@ fi
   echo
   echo "GPIO Utility"
   cd ../gpio
-  make -j5
-  check_make_ok
-  $sudo make install
+  if [ x$hardware = "xRockchip" ]; then
+    make -j5 DEFS='-D_GNU_SOURCE -DTINKER_BOARD'
+    check_make_ok
+    $sudo make install DEFS='-D_GNU_SOURCE -DTINKER_BOARD'
+  else
+    make -j5
+    check_make_ok
+    $sudo make install
+  fi
   check_make_ok
 
 # echo
