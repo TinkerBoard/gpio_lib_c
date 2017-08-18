@@ -754,6 +754,26 @@ void asus_pwm_write(int pin, int value)
 	}
 }
 
+void asus_pwmToneWrite(int pin, int freq)
+{
+	int divi, pwm_clock, range;
+	switch (pin)
+	{
+		case PWM2:divi=((*(pwm+RK3288_PWM0_CTR/4+2*4) >> 16) & 0xff) << 1; break;
+		case PWM3:divi=((*(pwm+RK3288_PWM0_CTR/4+3*4) >> 16) & 0xff) << 1; break;
+		default:divi=-1;break;
+	}
+	if (freq == 0)
+		asus_pwm_write (pin, 0) ;
+	else
+	{
+		pwm_clock = 74250000 / divi;		//74.25Mhz / divi
+		range = pwm_clock / freq ;
+		asus_set_pwmRange (range) ;
+		asus_pwm_write (pin, range / 2) ;
+	}
+}
+
 void asus_set_gpioClockFreq(int pin, int freq)
 {
 	int divi;

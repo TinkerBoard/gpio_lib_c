@@ -1612,7 +1612,16 @@ void analogWrite (int pin, int value)
 void pwmToneWrite (int pin, int freq)
 {
 	#ifdef TINKER_BOARD
-	printf("If you want to use hardware pwm ,please read readme\n");	
+	if ((pin & PI_GPIO_MASK) == 0)          // On-Board Pin
+    {
+		if (wiringPiMode == WPI_MODE_PINS)
+			pin = pinToGpio [pin] ;
+		else if (wiringPiMode == WPI_MODE_PHYS)
+			pin = physToGpio [pin] ;
+		else if (wiringPiMode != WPI_MODE_GPIO)
+			return ;
+		asus_pwmToneWrite(pin, freq);
+	}
 	#else
 	int range ;
 	if (RASPBERRY_PI_PERI_BASE == 0)	// Ignore for now

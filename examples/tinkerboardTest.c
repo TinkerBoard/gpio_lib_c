@@ -120,6 +120,13 @@ int main()
     pwmWrite(23, 1024);
     showAPIStatus("pwmWrite [Check Pin 33 (Changed Pulse) by Oscilloscop]", 1);
     PAUSE
+	pwmSetClock(124);
+	pwmToneWrite(23, 5 * 1000);
+    showAPIStatus("pwmToneWrite [Check Pin 33 (5kHz) by Oscilloscop]", 1);
+    PAUSE
+	pwmToneWrite(23, 20 * 1000);
+    showAPIStatus("pwmToneWrite [Check Pin 33 (20kHz) by Oscilloscop]", 1);
+    PAUSE
     printf("==== CHECK Physical PIN 32 (PWM3) ====\n");
     PAUSE
     pinMode(26, OUTPUT);
@@ -144,6 +151,13 @@ int main()
     PAUSE
     pwmWrite(26, 1024);
     showAPIStatus("pwmWrite [Check Pin 32 (Changed Pulse) by Oscilloscop]", 1);
+    PAUSE
+	pwmSetClock(124);
+	pwmToneWrite(26, 5 * 1000);
+    showAPIStatus("pwmToneWrite [Check Pin 32 (5kHz) by Oscilloscop]", 1);
+    PAUSE
+	pwmToneWrite(26, 20 * 1000);
+    showAPIStatus("pwmToneWrite [Check Pin 32 (20kHz) by Oscilloscop]", 1);
     PAUSE
     return 0;
 }

@@ -16,6 +16,7 @@ void asus_pullUpDnControl (int pin, int pud);
 void asus_set_pwmRange(unsigned int range);
 void asus_set_pwmClock(int divisor);
 void asus_pwm_write(int pin, int value);
+void asus_pwmToneWrite(int pin, int freq);
 void asus_set_gpioClockFreq(int pin, int freq);
 int asus_get_pinAlt(int pin);
 void asus_set_pinAlt(int pin, int alt);
