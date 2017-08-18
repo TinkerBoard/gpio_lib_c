@@ -124,7 +124,7 @@ fi
   echo "WiringPi Library"
   cd wiringPi
   $sudo make uninstall
-  if [ x$hardware == "xRockchip" ]; then
+  if [ x$hardware = "xRockchip" ]; then
     if [ x$1 = "xstatic" ]; then
 	  make -j5 static DEFS='-D_GNU_SOURCE -DTINKER_BOARD'
       check_make_ok
