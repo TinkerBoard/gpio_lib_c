@@ -91,8 +91,6 @@
 // Mask for the bottom 64 pins which belong to the Raspberry Pi
 //	The others are available for the other devices
 
-#define TINKER_BOARD
-
 #ifdef TINKER_BOARD
 #define	PI_GPIO_MASK	(0xFFFFFE00)
 #include "wiringTB.h"
