@@ -196,25 +196,22 @@ static volatile unsigned int GPIO_PWM ;
 #define	TIMER_COUNTER	(0x420 >> 2)
 
 // Locals to hold pointers to the hardware
-
+#ifndef TINKER_BOARD
 static volatile uint32_t *gpio ;
 static volatile uint32_t *pwm ;
 static volatile uint32_t *clk ;
 static volatile uint32_t *pads ;
+#endif
 
 #ifdef	USE_TIMER
 static volatile uint32_t *timer ;
 static volatile uint32_t *timerIrqRaw ;
 #endif
 
-static asusversion=0;
-
 // Data for use with the boardId functions.
 //	The order of entries here to correspond with the PI_MODEL_X
 //	and PI_VERSION_X defines in wiringPi.h
 //	Only intended for the gpio command - use at your own risk!
-
-static int piModel2 = FALSE ;
 
 const char *piModelNames [16] =
 {
@@ -345,6 +342,7 @@ static void (*isrFunctions [258])(void) ;
 
 static int *pinToGpio ;
 
+#ifndef TINKER_BOARD
 // Revision 1, 1.1:
 
 static int pinToGpioR1 [64] =
@@ -381,7 +379,7 @@ static int pinToGpioR2 [64] =
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,	// ... 47
   -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,	// ... 63
 } ;
-
+#endif
 
 // physToGpio:
 //	Take a physical pin (1 through 26) and re-map it to the BCM_GPIO pin
@@ -390,6 +388,7 @@ static int pinToGpioR2 [64] =
 
 static int *physToGpio ;
 
+#ifndef TINKER_BOARD
 static int physToGpioR1 [64] =
 {
   -1,		// 0
@@ -541,7 +540,6 @@ static uint8_t gpioToFEN [] =
 } ;
 #endif
 
-
 // GPPUD:
 //	GPIO Pin pull up/down register
 
@@ -637,6 +635,7 @@ static uint8_t gpioToClkDiv [] =
          -1,        -1,        -1,        -1,        -1,        -1,        -1,        -1,	// 48 -> 55
          -1,        -1,        -1,        -1,        -1,        -1,        -1,        -1,	// 56 -> 63
 } ;
+#endif
 
 
 /*
@@ -970,31 +969,28 @@ int physPinToGpio (int physPin)
 
 void setPadDrive (int group, int value)
 {
-  uint32_t wrVal ;
-
-  if(asusversion == ASUSVER)
-  {
-    printf("setPadDrive is not available for ASUS Tinker.\n");
-    return;
-  }
-
-  if ((wiringPiMode == WPI_MODE_PINS) || (wiringPiMode == WPI_MODE_PHYS) || (wiringPiMode == WPI_MODE_GPIO))
-  {
-    if (RASPBERRY_PI_PERI_BASE == 0)	// Ignore for now
-      return ;
-
-    if ((group < 0) || (group > 2))
-      return ;
-
-    wrVal = BCM_PASSWORD | 0x18 | (value & 7) ;
-    *(pads + group + 11) = wrVal ;
-
-    if (wiringPiDebug)
-    {
-      printf ("setPadDrive: Group: %d, value: %d (%08X)\n", group, value, wrVal) ;
-      printf ("Read : %08X\n", *(pads + group + 11)) ;
-    }
-  }
+	#ifndef TINKER_BOARD
+	uint32_t wrVal ;
+	#endif
+	if ((wiringPiMode == WPI_MODE_PINS) || (wiringPiMode == WPI_MODE_PHYS) || (wiringPiMode == WPI_MODE_GPIO))
+	{
+		#ifdef TINKER_BOARD
+		printf("setPadDrive is not available for ASUS Tinker.\n");
+		return;
+		#else
+		if (RASPBERRY_PI_PERI_BASE == 0)	// Ignore for now
+			return ;
+		if ((group < 0) || (group > 2))
+			return ;
+		wrVal = BCM_PASSWORD | 0x18 | (value & 7) ;
+		*(pads + group + 11) = wrVal ;
+		if (wiringPiDebug)
+		{
+			printf ("setPadDrive: Group: %d, value: %d (%08X)\n", group, value, wrVal) ;
+			printf ("Read : %08X\n", *(pads + group + 11)) ;
+		}
+		#endif
+	}
 }
 
 
@@ -1308,7 +1304,9 @@ void pinModeAlt (int pin, int mode)
 
 void pinMode (int pin, int mode)
 {
+	#ifndef TINKER_BOARD
     int    fSel, shift, alt ;
+	#endif
     struct wiringPiNodeStruct *node = wiringPiNodes ;
     int origPin = pin ;
     if ((pin & PI_GPIO_MASK) == 0)		// On-board pin
@@ -1321,8 +1319,10 @@ void pinMode (int pin, int mode)
             return ;
         softPwmStop  (origPin) ;
         softToneStop (origPin) ;
+		#ifndef TINKER_BOARD
         fSel    = gpioToGPFSEL [pin] ;
         shift   = gpioToShift  [pin] ;
+		#endif
         if (mode == INPUT)
 			#ifdef TINKER_BOARD
             asus_set_pin_mode(pin, INPUT); // Sets bits to zero = input
@@ -1612,26 +1612,20 @@ void analogWrite (int pin, int value)
 void pwmToneWrite (int pin, int freq)
 {
 	int range ;
-	if(asusversion == ASUSVER)
-	{
-		printf("If you want to use hardware pwm ,please read readme\n");
-	
-	}
-  	else
-  	{
-		if (RASPBERRY_PI_PERI_BASE == 0)	// Ignore for now
+	#ifdef TINKER_BOARD
+	printf("If you want to use hardware pwm ,please read readme\n");	
+	#else
+	if (RASPBERRY_PI_PERI_BASE == 0)	// Ignore for now
 		return ;
-
-		if (freq == 0)
+	if (freq == 0)
 		pwmWrite (pin, 0) ;             // Off
-		else
-		{
-			range = 600000 / freq ;
-			pwmSetRange (range) ;
-			pwmWrite (pin, freq / 2) ;
-		}
-	}	
-  
+	else
+	{
+		range = 600000 / freq ;
+		pwmSetRange (range) ;
+		pwmWrite (pin, freq / 2) ;
+	}
+	#endif	
 }
 
 
