@@ -200,7 +200,7 @@ static void readallPhys (int physPin, int model)
     else
       pin = physToWpi [physPin] ;
 
-   if (model == PI_MODEL_ASUSPI)
+   if (model == PI_MODEL_TB)
      printf (" | %4s", asusPinModeToString(getPinMode (pin))) ;
    else
      printf (" | %4s", alts [getAlt (pin)]) ;
@@ -229,7 +229,7 @@ static void readallPhys (int physPin, int model)
 
    printf (" | %d", digitalRead (pin)) ; 
    //printf (" |     ") ;
-   if (model == PI_MODEL_ASUSPI)
+   if (model == PI_MODEL_TB)
      printf (" | %-4s", asusPinModeToString(getPinMode (pin))) ;
    else
      printf (" | %-4s", alts [getAlt (pin)]) ;
@@ -323,7 +323,7 @@ static void plus2header (int model)
     printf (" +-----+-----+---------+------+---+--B Plus--+---+------+---------+-----+-----+\n") ;
   else if (model == PI_MODEL_ZERO)
     printf (" +-----+-----+---------+------+---+-Pi Zero--+---+------+---------+-----+-----+\n") ;
-  else if (model == PI_MODEL_ASUSPI)
+  else if (model == PI_MODEL_TB)
     printf (" +-----+-----+---------+------+---+--Tinker--+---+------+---------+-----+-----+\n") ;
   else
     printf (" +-----+-----+---------+------+---+---Pi ----+---+------+---------+-----+-----+\n") ;
@@ -361,7 +361,7 @@ void doReadall (void)
 
   /**/ if ((model == PI_MODEL_A) || (model == PI_MODEL_B))
     abReadall (model, rev) ;
-  else if ((model == PI_MODEL_BP) || (model == PI_MODEL_AP) || (model == PI_MODEL_2) || (model == PI_MODEL_ZERO)||(PI_MODEL_ASUSPI))
+  else if ((model == PI_MODEL_BP) || (model == PI_MODEL_AP) || (model == PI_MODEL_2) || (model == PI_MODEL_ZERO)||(PI_MODEL_TB))
     piPlusReadall (model) ;
   else if (model == PI_MODEL_CM)
     cmReadall () ;

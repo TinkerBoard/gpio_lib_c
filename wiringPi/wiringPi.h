@@ -83,7 +83,7 @@
 #define	PI_MODEL_07		7
 #define	PI_MODEL_08		8
 #define	PI_MODEL_ZERO		9
-#define PI_MODEL_ASUSPI		10
+#define PI_MODEL_TB		10
 
 #define	PI_VERSION_1		0
 #define	PI_VERSION_1_1		1
@@ -192,7 +192,7 @@ extern int  wiringPiSetupPiFace (void) ;
 extern int  wiringPiSetupPiFaceForGpioProg (void) ;	// Don't use this - for gpio program only
 
 // On-Board Raspberry Pi hardware specific stuff
-
+extern int  piGpioLayout        (void) ;
 extern int  piBoardRev          (void) ;
 extern void piBoardId           (int *model, int *rev, int *mem, int *maker, int *overVolted) ;
 extern int  wpiPinToGpio        (int wpiPin) ;

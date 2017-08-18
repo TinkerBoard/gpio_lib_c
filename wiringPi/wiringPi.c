@@ -687,7 +687,7 @@ int wiringPiFailure (int fatal, const char *message, ...)
  *********************************************************************************
  */
 
-static void piBoardRevOops (const char *why)
+static void piGpioLayoutOops (const char *why)
 {
 	fprintf (stderr, "piBoardRev: Unable to determine board revision from /proc/cpuinfo\n") ;
 	fprintf (stderr, " -> %s\n", why) ;
@@ -696,179 +696,91 @@ static void piBoardRevOops (const char *why)
 	exit (EXIT_FAILURE) ;
 }
 
-int asuspi(void)
+int piGpioLayout (void)
 {
-  FILE *cpuFd ;
-  char line [120] ;
-  char *d;
-	//printf("asuspi\n");
-  if ((cpuFd = fopen ("/proc/cpuinfo", "r")) == NULL)
-    piBoardRevOops ("Unable to open /proc/cpuinfo") ;
-
-  while (fgets (line, 120, cpuFd) != NULL)
-  {
-    if (strncmp (line, "Hardware", 8) == 0)
-    break ;
-  }
-		
-	fclose (cpuFd) ;
+	FILE *cpuFd ;
+	char line [120] ;
+	char *c ;
+	static int  gpioLayout = -1 ;
+	if (gpioLayout != -1)	// No point checking twice
+		return gpioLayout ;
+	if ((cpuFd = fopen ("/proc/cpuinfo", "r")) == NULL)
+		piGpioLayoutOops ("Unable to open /proc/cpuinfo") ;
+	// Start by looking for the Architecture to make sure we're really running
+	//	on a Pi. I'm getting fed-up with people whinging at me because
+	//	they can't get it to work on weirdFruitPi boards...
+	while (fgets (line, 120, cpuFd) != NULL)
+		if (strncmp (line, "Hardware", 8) == 0)
+			break ;
 	if (strncmp (line, "Hardware", 8) != 0)
-		piBoardRevOops ("No \"Hardware\" line") ;
-	
-  for (d = &line [strlen (line) - 1] ; (*d == '\n') || (*d == '\r') ; --d)
-    *d = 0 ;
-
-  if (wiringPiDebug)
-  printf ("piboardRev: Hardware string: %s\n", line) ;
-	
-  if (strstr(line,"Rockchip (Device Tree)") != NULL)
-  {
-		if (wiringPiDebug)
-	printf ("Hardware:%s\n",line) ;
-	return 1 ;
-  }
-  else
-  {
-		if (wiringPiDebug)
-	printf ("Hardware:%s\n",line) ;
-	return 0 ;
-  }
-}//int asuspi(void)
+		piGpioLayoutOops ("No \"Hardware\" line") ;
+	if (wiringPiDebug)
+		printf ("piGpioLayout: Hardware: %s\n", line) ;
+	// See if it's BCM2708 or BCM2709 or the new BCM2835.
+	// OK. As of Kernel 4.8,  we have BCM2835 only, regardless of model.
+	//	However I still want to check because it will trap the cheapskates and rip-
+	//	off merchants who want to use wiringPi on non-Raspberry Pi platforms - which
+	//	I do not support so don't email me your bleating whinges about anything
+	//	other than a genuine Raspberry Pi.
+	if (! (strstr (line, "BCM2708") || strstr (line, "BCM2709") || strstr (line, "BCM2835") || 		 strstr (line, "Rockchip")))
+	{
+		fprintf (stderr, "Unable to determine hardware version. I see: %s,\n", line) ;
+		fprintf (stderr, " - expecting BCM2708, BCM2709 or BCM2835.\n") ;
+		fprintf (stderr, "If this is a genuine Raspberry Pi then please report this\n") ;
+		fprintf (stderr, "to projects@drogon.net. If this is not a Raspberry Pi then you\n") ;
+		fprintf (stderr, "are on your own as wiringPi is designed to support the\n") ;
+		fprintf (stderr, "Raspberry Pi ONLY.\n") ;
+		exit (EXIT_FAILURE) ;
+	}
+	// Right - we're Probably on a Raspberry Pi. Check the revision field for the real
+	//	hardware type
+	//	In-future, I ought to use the device tree as there are now Pi entries in
+	//	/proc/device-tree/ ...
+	//	but I'll leave that for the next revision.
+	// Isolate the Revision line
+	rewind (cpuFd) ;
+	while (fgets (line, 120, cpuFd) != NULL)
+		if (strncmp (line, "Revision", 8) == 0)
+			break ;
+	fclose (cpuFd) ;
+	if (strncmp (line, "Revision", 8) != 0)
+		piGpioLayoutOops ("No \"Revision\" line") ;
+	// Chomp trailing CR/NL
+	for (c = &line [strlen (line) - 1] ; (*c == '\n') || (*c == '\r') ; --c)
+		*c = 0 ;
+	if (wiringPiDebug)
+		printf ("piGpioLayout: Revision string: %s\n", line) ;
+	// Scan to the first character of the revision number
+	for (c = line ; *c ; ++c)
+		if (*c == ':')
+			break ;
+	if (*c != ':')
+		piGpioLayoutOops ("Bogus \"Revision\" line (no colon)") ;
+	// Chomp spaces
+	++c ;
+	while (isspace (*c))
+		++c ;
+	if (!isxdigit (*c))
+		piGpioLayoutOops ("Bogus \"Revision\" line (no hex digit at start of revision)") ;
+	// Make sure its long enough
+	if (strlen (c) < 4)
+		piGpioLayoutOops ("Bogus revision line (too small)") ;
+	// Isolate  last 4 characters: (in-case of overvolting or new encoding scheme)
+	c = c + strlen (c) - 4 ;
+	if (wiringPiDebug)
+		printf ("piGpioLayout: last4Chars are: \"%s\"\n", c) ;
+	if ( (strcmp (c, "0002") == 0) || (strcmp (c, "0003") == 0))
+		gpioLayout = 1 ;
+	else
+		gpioLayout = 2 ;	// Covers everything else from the B revision 2 to the B+, the Pi v2, v3, zero and CM's.
+	if (wiringPiDebug)
+		printf ("piGpioLayoutOops: Returning revision: %d\n", gpioLayout) ;
+	return gpioLayout ;
+}
 
 int piBoardRev (void)
 {
-  FILE *cpuFd ;
-  char line [120] ;
-  char *c ;
-  static int  boardRev = -1 ;
-
-	
-	if(asuspi())
-	  {
-		asusversion = ASUSVER;
-			if (wiringPiDebug)
-				printf ("piboardRev:  %d\n", asusversion) ;
-			return ASUSVER ;
-	  }
-
-
-  if (boardRev != -1)	// No point checking twice
-    return boardRev ;
-
-  if ((cpuFd = fopen ("/proc/cpuinfo", "r")) == NULL)
-    piBoardRevOops ("Unable to open /proc/cpuinfo") ;
-
-// Start by looking for the Architecture to make sure we're really running
-//	on a Pi. I'm getting fed-up with people whinging at me because
-//	they can't get it to work on weirdFruitPi boards...
-
-  while (fgets (line, 120, cpuFd) != NULL)
-    if (strncmp (line, "Hardware", 8) == 0)
-      break ;
-
-  if (strncmp (line, "Hardware", 8) != 0)
-    piBoardRevOops ("No hardware line") ;
-
-  if (wiringPiDebug)
-    printf ("piboardRev: Hardware: %s\n", line) ;
-
-// See if it's BCM2708 or BCM2709
-
-  if (strstr (line, "BCM2709") != NULL)	// Pi v2 - no point doing anything more at this point
-  //if (strstr (line, "Rockchip RK3128") != NULL)	// Pi v2 - no point doing anything more at this point
-  {
-    piModel2 = TRUE ;
-    fclose (cpuFd) ;
-    return boardRev = 2 ;
-  }
-  else if (strstr (line, "BCM2708") == NULL)
-  {
-    fprintf (stderr, "Unable to determine hardware version. I see: %s,\n", line) ;
-    fprintf (stderr, " - expecting BCM2708 or BCM2709.\n") ;
-    fprintf (stderr, "If this is a genuine Raspberry Pi then please report this\n") ;
-    fprintf (stderr, "to projects@drogon.net. If this is not a Raspberry Pi then you\n") ;
-    fprintf (stderr, "are on your own as wiringPi is designed to support the\n") ;
-    fprintf (stderr, "Raspberry Pi ONLY.\n") ;
-    exit (EXIT_FAILURE) ;
-  }
-
-// Now do the rest of it as before - we just need to see if it's an older
-//	Rev 1 as anything else is rev 2.
-
-// Isolate the Revision line
-
-  rewind (cpuFd) ;
-  while (fgets (line, 120, cpuFd) != NULL)
-    if (strncmp (line, "Revision", 8) == 0)
-      break ;
-
-  fclose (cpuFd) ;
-
-  if (strncmp (line, "Revision", 8) != 0)
-    piBoardRevOops ("No \"Revision\" line") ;
-
-// Chomp trailing CR/NL
-
-  for (c = &line [strlen (line) - 1] ; (*c == '\n') || (*c == '\r') ; --c)
-    *c = 0 ;
-  
-  if (wiringPiDebug)
-    printf ("piboardRev: Revision string: %s\n", line) ;
-
-// Scan to the first character of the revision number
-
-  for (c = line ; *c ; ++c)
-    if (*c == ':')
-      break ;
-
-  if (*c != ':')
-    piBoardRevOops ("Bogus \"Revision\" line (no colon)") ;
-
-// Chomp spaces
-
-  ++c ;
-  while (isspace (*c))
-    ++c ;
-
-  if (!isxdigit (*c))
-    piBoardRevOops ("Bogus \"Revision\" line (no hex digit at start of revision)") ;
-
-// Make sure its long enough
-
-  if (strlen (c) < 4)
-    piBoardRevOops ("Bogus revision line (too small)") ;
-
-// If you have overvolted the Pi, then it appears that the revision
-//	has 100000 added to it!
-// The actual condition for it being set is:
-//	 (force_turbo || current_limit_override || temp_limit>85) && over_voltage>0
-
-
-// This test is not correct for the new encoding scheme, so we'll remove it here as
-//	we don't really need it at this point.
-
-/********************
-  if (wiringPiDebug)
-    if (strlen (c) != 4)
-      printf ("piboardRev: This Pi has/is (force_turbo || current_limit_override || temp_limit>85) && over_voltage>0\n") ;
-*******************/
-
-// Isolate  last 4 characters:
-
-  c = c + strlen (c) - 4 ;
-
-  if (wiringPiDebug)
-    printf ("piboardRev: last4Chars are: \"%s\"\n", c) ;
-
-  if ( (strcmp (c, "0002") == 0) || (strcmp (c, "0003") == 0))
-    boardRev = 1 ;
-  else
-    boardRev = 2 ;	// Covers everything else from the B revision 2 to the B+, the Pi v2 and CM's.
-
-  if (wiringPiDebug)
-    printf ("piBoardRev: Returning revision: %d\n", boardRev) ;
-
-  return boardRev ;
+	return piGpioLayout();
 }
 
 
@@ -929,127 +841,97 @@ int piBoardRev (void)
 
 void piBoardId (int *model, int *rev, int *mem, int *maker, int *warranty)
 {
-  FILE *cpuFd ;
-  char line [120] ;
-  char *c ;
-  unsigned int revision ;
-  int bRev, bType, bProc, bMfg, bMem, bWarranty ;
-
-//	Will deal with the properly later on - for now, lets just get it going...
-//  unsigned int modelNum ;
-
-  (void)piBoardRev () ;	// Call this first to make sure all's OK. Don't care about the result.
-
-  if ((cpuFd = fopen ("/proc/cpuinfo", "r")) == NULL)
-    piBoardRevOops ("Unable to open /proc/cpuinfo") ;
-
-  while (fgets (line, 120, cpuFd) != NULL)
-    if (strncmp (line, "Revision", 8) == 0)
-      break ;
-
-  fclose (cpuFd) ;
-
-  if (strncmp (line, "Revision", 8) != 0)
-    piBoardRevOops ("No \"Revision\" line") ;
-
-// Chomp trailing CR/NL
-
-  for (c = &line [strlen (line) - 1] ; (*c == '\n') || (*c == '\r') ; --c)
-    *c = 0 ;
-  
-  if (wiringPiDebug)
-    printf ("piboardId: Revision string: %s\n", line) ;
-
-// Need to work out if it's using the new or old encoding scheme:
-
-// Scan to the first character of the revision number
-
-  for (c = line ; *c ; ++c)
-    if (*c == ':')
-      break ;
-
-  if (*c != ':')
-    piBoardRevOops ("Bogus \"Revision\" line (no colon)") ;
-
-// Chomp spaces
-
-  ++c ;
-  while (isspace (*c))
-    ++c ;
-
-  if (!isxdigit (*c))
-    piBoardRevOops ("Bogus \"Revision\" line (no hex digit at start of revision)") ;
-
-  revision = (unsigned int)strtol (c, NULL, 16) ; // Hex number with no leading 0x
-
-// Check for new way:
-
-  if ((revision &  (1 << 23)) != 0)	// New way
-  {
-    if (wiringPiDebug)
-      printf ("piBoardId: New Way: revision is: 0x%08X\n", revision) ;
-
-    bRev      = (revision & (0x0F <<  0)) >>  0 ;
-    bType     = (revision & (0xFF <<  4)) >>  4 ;
-    bProc     = (revision & (0x0F << 12)) >> 12 ;	// Not used for now.
-    bMfg      = (revision & (0x0F << 16)) >> 16 ;
-    bMem      = (revision & (0x07 << 20)) >> 20 ;
-    bWarranty = (revision & (0x03 << 24)) != 0 ;
-    
-    *model    = bType ;
-    *rev      = bRev ;
-    *mem      = bMem ;
-    *maker    = bMfg  ;
-    *warranty = bWarranty ;
-
-    if (wiringPiDebug)
-      printf ("piboardId: rev: %d, type: %d, proc: %d, mfg: %d, mem: %d, warranty: %d\n",
-		bRev, bType, bProc, bMfg, bMem, bWarranty) ;
-  }
-  else					// Old way
-  {
-    if (wiringPiDebug)
-      printf ("piBoardId: Old Way: revision is: %s\n", c) ;
-
-    if (!isdigit (*c))
-      piBoardRevOops ("Bogus \"Revision\" line (no digit at start of revision)") ;
-
-// Make sure its long enough
-
-    if (strlen (c) < 4)
-      piBoardRevOops ("Bogus \"Revision\" line (not long enough)") ;
-
-// If longer than 4, we'll assume it's been overvolted
-
-    *warranty = strlen (c) > 4 ;
-  
-// Extract last 4 characters:
-
-    c = c + strlen (c) - 4 ;
-	 if (wiringPiDebug)
-      printf ("piBoardId: 2: revision is: %s\n", c) ;
-// Fill out the replys as appropriate
-
-    /**/ if (strcmp (c, "0002") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_1   ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
-    else if (strcmp (c, "0003") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_1_1 ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
-    else if (strcmp (c, "0004") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_2   ; *mem = 0 ; *maker = PI_MAKER_SONY    ; }
-    else if (strcmp (c, "0005") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_2   ; *mem = 0 ; *maker = PI_MAKER_UNKNOWN ; }
-    else if (strcmp (c, "0006") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_2   ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
-    else if (strcmp (c, "0007") == 0) { *model = PI_MODEL_A  ; *rev = PI_VERSION_2   ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
-    else if (strcmp (c, "0008") == 0) { *model = PI_MODEL_A  ; *rev = PI_VERSION_2   ; *mem = 0 ; *maker = PI_MAKER_SONY ;  ; }
-    else if (strcmp (c, "0009") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_2   ; *mem = 0 ; *maker = PI_MAKER_UNKNOWN ; }
-    else if (strcmp (c, "000d") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_2   ; *mem = 1 ; *maker = PI_MAKER_EGOMAN  ; }
-    else if (strcmp (c, "000e") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_2   ; *mem = 1 ; *maker = PI_MAKER_SONY    ; }
-    else if (strcmp (c, "000f") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_2   ; *mem = 1 ; *maker = PI_MAKER_EGOMAN  ; }
-    else if (strcmp (c, "0010") == 0) { *model = PI_MODEL_BP ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_SONY    ; }
-    else if (strcmp (c, "0011") == 0) { *model = PI_MODEL_CM ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_SONY    ; }
-    else if (strcmp (c, "0012") == 0) { *model = PI_MODEL_AP ; *rev = PI_VERSION_1_2 ; *mem = 0 ; *maker = PI_MAKER_SONY    ; }
-    else if (strcmp (c, "0013") == 0) { *model = PI_MODEL_BP ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_EGOMAN  ; }
-    else if (strcmp (c, "0014") == 0) { *model = PI_MODEL_CM ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_SONY    ; }
-    else if (strcmp (c, "0015") == 0) { *model = PI_MODEL_AP ; *rev = PI_VERSION_1_1 ; *mem = 0 ; *maker = PI_MAKER_SONY    ; }
-	else if (strcmp (c, "0000") == 0) { *model = PI_MODEL_ASUSPI;  *rev = PI_VERSION_1_2;  *mem = 3;  *maker = PI_MAKER_ASUS;}
-	else                              { *model = 0           ; *rev = 0              ; *mem =   0 ; *maker = 0 ;               }
-  }
+	FILE *cpuFd ;
+	char line [120] ;
+	char *c ;
+	unsigned int revision ;
+	int bRev, bType, bProc, bMfg, bMem, bWarranty ;
+	//	Will deal with the properly later on - for now, lets just get it going...
+	//  unsigned int modelNum ;
+	(void)piGpioLayout () ;	// Call this first to make sure all's OK. Don't care about the result.
+	if ((cpuFd = fopen ("/proc/cpuinfo", "r")) == NULL)
+		piGpioLayoutOops ("Unable to open /proc/cpuinfo") ;
+	while (fgets (line, 120, cpuFd) != NULL)
+		if (strncmp (line, "Revision", 8) == 0)
+			break ;
+	fclose (cpuFd) ;
+	if (strncmp (line, "Revision", 8) != 0)
+		piGpioLayoutOops ("No \"Revision\" line") ;
+	// Chomp trailing CR/NL
+	for (c = &line [strlen (line) - 1] ; (*c == '\n') || (*c == '\r') ; --c)
+		*c = 0 ;
+	if (wiringPiDebug)
+		printf ("piboardId: Revision string: %s\n", line) ;
+	// Need to work out if it's using the new or old encoding scheme:
+	// Scan to the first character of the revision number
+	for (c = line ; *c ; ++c)
+		if (*c == ':')
+			break ;
+	if (*c != ':')
+		piGpioLayoutOops ("Bogus \"Revision\" line (no colon)") ;
+	// Chomp spaces
+	++c ;
+	while (isspace (*c))
+		++c ;
+	if (!isxdigit (*c))
+		piGpioLayoutOops ("Bogus \"Revision\" line (no hex digit at start of revision)") ;
+	revision = (unsigned int)strtol (c, NULL, 16) ; // Hex number with no leading 0x
+	// Check for new way:
+	if ((revision &  (1 << 23)) != 0)	// New way
+	{
+		if (wiringPiDebug)
+			printf ("piBoardId: New Way: revision is: 0x%08X\n", revision) ;
+		bRev      = (revision & (0x0F <<  0)) >>  0 ;
+		bType     = (revision & (0xFF <<  4)) >>  4 ;
+		bProc     = (revision & (0x0F << 12)) >> 12 ;	// Not used for now.
+		bMfg      = (revision & (0x0F << 16)) >> 16 ;
+		bMem      = (revision & (0x07 << 20)) >> 20 ;
+		bWarranty = (revision & (0x03 << 24)) != 0 ;
+		*model    = bType ;
+		*rev      = bRev ;
+		*mem      = bMem ;
+		*maker    = bMfg  ;
+		*warranty = bWarranty ;
+		if (wiringPiDebug)
+			printf ("piboardId: rev: %d, type: %d, proc: %d, mfg: %d, mem: %d, warranty: %d\n",
+					bRev, bType, bProc, bMfg, bMem, bWarranty) ;
+	}
+	else					// Old way
+	{
+		if (wiringPiDebug)
+			printf ("piBoardId: Old Way: revision is: %s\n", c) ;
+		if (!isdigit (*c))
+			piGpioLayoutOops ("Bogus \"Revision\" line (no digit at start of revision)") ;
+		// Make sure its long enough
+		if (strlen (c) < 4)
+			piGpioLayoutOops ("Bogus \"Revision\" line (not long enough)") ;
+		// If longer than 4, we'll assume it's been overvolted
+		*warranty = strlen (c) > 4 ;
+		// Extract last 4 characters:
+		c = c + strlen (c) - 4 ;
+		if (wiringPiDebug)
+			printf ("piBoardId: 2: revision is: %s\n", c) ;
+		// Fill out the replys as appropriate
+		/**/ if (strcmp (c, "0002") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_1   ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
+		else if (strcmp (c, "0003") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_1_1 ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
+		else if (strcmp (c, "0004") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_2   ; *mem = 0 ; *maker = PI_MAKER_SONY    ; }
+		else if (strcmp (c, "0005") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_2   ; *mem = 0 ; *maker = PI_MAKER_UNKNOWN ; }
+		else if (strcmp (c, "0006") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_2   ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
+		else if (strcmp (c, "0007") == 0) { *model = PI_MODEL_A  ; *rev = PI_VERSION_2   ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
+		else if (strcmp (c, "0008") == 0) { *model = PI_MODEL_A  ; *rev = PI_VERSION_2   ; *mem = 0 ; *maker = PI_MAKER_SONY ;  ; }
+		else if (strcmp (c, "0009") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_2   ; *mem = 0 ; *maker = PI_MAKER_UNKNOWN ; }
+		else if (strcmp (c, "000d") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_2   ; *mem = 1 ; *maker = PI_MAKER_EGOMAN  ; }
+		else if (strcmp (c, "000e") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_2   ; *mem = 1 ; *maker = PI_MAKER_SONY    ; }
+		else if (strcmp (c, "000f") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_2   ; *mem = 1 ; *maker = PI_MAKER_EGOMAN  ; }
+		else if (strcmp (c, "0010") == 0) { *model = PI_MODEL_BP ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_SONY    ; }
+		else if (strcmp (c, "0011") == 0) { *model = PI_MODEL_CM ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_SONY    ; }
+		else if (strcmp (c, "0012") == 0) { *model = PI_MODEL_AP ; *rev = PI_VERSION_1_2 ; *mem = 0 ; *maker = PI_MAKER_SONY    ; }
+		else if (strcmp (c, "0013") == 0) { *model = PI_MODEL_BP ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_EGOMAN  ; }
+		else if (strcmp (c, "0014") == 0) { *model = PI_MODEL_CM ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_SONY    ; }
+		else if (strcmp (c, "0015") == 0) { *model = PI_MODEL_AP ; *rev = PI_VERSION_1_1 ; *mem = 0 ; *maker = PI_MAKER_SONY    ; }
+		else if (strcmp (c, "0000") == 0) { *model = PI_MODEL_TB ; *rev = PI_VERSION_1_2 ; *mem = 3 ; *maker = PI_MAKER_ASUS	; }
+		else                              { *model = 0           ; *rev = 0              ; *mem = 0 ; *maker = 0 				; }
+	}
 }
  
 
@@ -2114,7 +1996,6 @@ unsigned int micros (void)
 int wiringPiSetup (void)
 {
 	int   fd ;
-	int   boardRev ;
 	int   model, rev, mem, maker, overVolted ;
 	if (getenv (ENV_DEBUG) != NULL)
 		wiringPiDebug = TRUE ;
@@ -2128,12 +2009,11 @@ int wiringPiSetup (void)
 		if (wiringPiTryGpioMem)
 			printf ("wiringPi: Using /dev/gpiomem\n") ;
 	}
-	boardRev = piBoardRev () ;
 	#ifdef TINKER_BOARD
-	pinToGpio =  asus_get_pinToGpio(boardRev);
-	physToGpio = asus_get_physToGpio(boardRev);
+	pinToGpio =  asus_get_pinToGpio(piGpioLayout());
+	physToGpio = asus_get_physToGpio(piGpioLayout());
 	#else
-	/*if (piGpioLayout () == 1)	// A, B, Rev 1, 1.1
+	if (piGpioLayout () == 1)	// A, B, Rev 1, 1.1
 	{
 		pinToGpio =  pinToGpioR1 ;
 		physToGpio = physToGpioR1 ;
@@ -2142,14 +2022,12 @@ int wiringPiSetup (void)
 	{
 		pinToGpio =  pinToGpioR2 ;
 		physToGpio = physToGpioR2 ;
-	}*/
-	pinToGpio =  pinToGpioR1 ;
-	physToGpio = physToGpioR1 ;
+	}
 	#endif
 	// Open the master /dev/ memory control device
 	// Open the master /dev/memory device
 	#ifdef TINKER_BOARD
-	tinker_board_setup(boardRev);
+	tinker_board_setup(piGpioLayout());
 	#else
 	// Map the individual hardware components
 	// GPIO:
@@ -2248,7 +2126,6 @@ int wiringPiSetupPhys (void)
 
 int wiringPiSetupSys (void)
 {
-	int boardRev ;
 	int pin ;
 	char fName [128] ;
 	if (getenv (ENV_DEBUG) != NULL)
@@ -2257,12 +2134,11 @@ int wiringPiSetupSys (void)
 		wiringPiReturnCodes = TRUE ;
 	if (wiringPiDebug)
 		printf ("wiringPi: wiringPiSetupSys called\n") ;
-	boardRev = piBoardRev () ;
 	#ifdef TINKER_BOARD
-	pinToGpio =  asus_get_pinToGpio(boardRev);
-	physToGpio = asus_get_physToGpio(boardRev);
+	pinToGpio =  asus_get_pinToGpio(piGpioLayout());
+	physToGpio = asus_get_physToGpio(piGpioLayout());
 	#else
-	/*if (piGpioLayout () == 1)	// A, B, Rev 1, 1.1
+	if (piGpioLayout () == 1)	// A, B, Rev 1, 1.1
 	{
 		pinToGpio =  pinToGpioR1 ;
 		physToGpio = physToGpioR1 ;
@@ -2271,9 +2147,7 @@ int wiringPiSetupSys (void)
 	{
 		pinToGpio =  pinToGpioR2 ;
 		physToGpio = physToGpioR2 ;
-	}*/
-	pinToGpio =  pinToGpioR1 ;
-	physToGpio = physToGpioR1 ;
+	}
 	#endif
 	// Open and scan the directory, looking for exported GPIOs, and pre-open
 	//	the 'value' interface to speed things up for later

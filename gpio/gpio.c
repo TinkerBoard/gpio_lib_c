@@ -1208,14 +1208,14 @@ static void doVersion (char *argv [])
   }
   else
 ***************/
-  if(model == PI_MODEL_ASUSPI)
+  if(model == PI_MODEL_TB)
   {
 	printf ("TinkerBoard Details:\n") ;
     	printf ("  Type: %s, Revision: %s, Memory: %dMB, Maker: %s %s\n", 
 	piModelNames [model], piRevisionNames [rev], piMemorySize [mem], piMakerNames [maker], warranty ? "[Out of Warranty]" : "") ;
 	
 
-  }//if(model == PI_MODEL_ASUSPI)
+  }//if(model == PI_MODEL_TB)
   else
   {
     printf ("Raspberry Pi Details:\n") ;
