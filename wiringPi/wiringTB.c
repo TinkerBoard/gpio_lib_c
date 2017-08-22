@@ -1,5 +1,4 @@
 #include "wiringTB.h"
-#include "wiringPi.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/mman.h>
@@ -103,7 +102,8 @@ int tinker_board_setup(int rev)
 	if ((mem_fd = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) 
 	{
 		printf("can't open /dev/mem \n");
-		return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
+		printf("wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno));
+		return -1;
     }
 	for(i=0;i<9;i++)
     {
@@ -117,7 +117,10 @@ int tinker_board_setup(int rev)
 			RK3288_GPIO(i)         //Offset to GPIO peripheral 
 		);
 		if ((uint32_t)gpio_map0[i] < 0)
-			return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
+		{
+			printf("wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno));
+			return -1;
+		}
 		gpio0[i] = (volatile unsigned *)gpio_map0[i];
    	}//for
 	/////////////mmap grf////////////
@@ -130,7 +133,10 @@ int tinker_board_setup(int rev)
 		RK3288_GRF_PHYS         //Offset to GPIO peripheral 
 	);
 	if ((uint32_t)grf_map < 0)
-        return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
+	{
+		printf("wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno));
+		return -1;
+	}
     grf = (volatile unsigned *)grf_map;
 	////////////////////////////  
 	////////////mmap pwm////////
@@ -143,7 +149,10 @@ int tinker_board_setup(int rev)
 		RK3288_PWM         //Offset to GPIO peripheral 
 	);
 	if ((uint32_t)pwm_map < 0)
-        return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
+	{
+		printf("wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno));
+		return -1;
+	}
     pwm = (volatile unsigned *)pwm_map;
 	////////////////////////////
 	////////////mmap pmu//////////
@@ -156,7 +165,10 @@ int tinker_board_setup(int rev)
 		RK3288_PMU         //Offset to GPIO peripheral 
 	);
 	if ((uint32_t)pmu_map < 0)
-        return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
+	{
+		printf("wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno));
+		return -1;
+	}
     pmu = (volatile unsigned *)pmu_map;
 	///////////////////////////////
 	////////////mmap cru//////////
@@ -169,7 +181,10 @@ int tinker_board_setup(int rev)
 		RK3288_CRU         //Offset to GPIO peripheral
 	);
 	if ((uint32_t)cru_map < 0)
-		return wiringPiFailure (WPI_ALMOST, "wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno)) ;
+	{
+		printf("wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno));
+		return -1;
+	}
 	cru = (volatile unsigned *)cru_map;
 	///////////////////////////////
 	close(mem_fd); // No need to keep mem_fdcru open after mmap
