@@ -1054,3 +1054,16 @@ void asus_set_pinAlt(int pin, int alt)
 			break;
 	}
 }
+
+void asus_cleanup(void)
+{
+	int i;
+	for(i=0;i<GPIO_BANK;i++)
+	{
+    	munmap((caddr_t)gpio_map0[i], BLOCK_SIZE);
+	}
+	munmap((caddr_t)grf_map, BLOCK_SIZE);
+	munmap((caddr_t)pwm_map, BLOCK_SIZE);
+	munmap((caddr_t)pmu_map, BLOCK_SIZE);
+	munmap((caddr_t)cru_map, BLOCK_SIZE);
+}
