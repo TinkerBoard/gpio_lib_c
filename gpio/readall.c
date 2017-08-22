@@ -42,6 +42,8 @@ extern int wpMode ;
 #  define       FALSE   (1==2)
 #endif
 
+#define	INPUT			 0
+#define	OUTPUT			 1
 #define SERIAL       40
 #define PWM          43
 #define GPIOIN           53
@@ -55,9 +57,9 @@ static const char *asusPinModeToString (int mode)
     return "SERL";
   else if ( mode == PWM)
     return "PWM";
-  else if ( mode == GPIOIN)
+  else if ( mode == INPUT)
     return "IN";
-  else if ( mode == GPIOOUT)
+  else if ( mode == OUTPUT)
     return "OUT";
   else if ( mode == CLKOUT)
     return "CLK";

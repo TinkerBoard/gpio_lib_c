@@ -2,7 +2,6 @@
 #define	__WIRING_TB_H__
 
 #include "RKIO.h"
-#include "wiringPi.h"
 
 int* asus_get_physToGpio(int rev);
 int* asus_get_pinToGpio(int rev);

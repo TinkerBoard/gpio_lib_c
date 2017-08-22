@@ -12,6 +12,16 @@
 #define	PAGE_SIZE		(4*1024)
 #define	BLOCK_SIZE		(4*1024)
 
+// Pin modes
+
+#define	INPUT			 0
+#define	OUTPUT			 1
+#define	PWM_OUTPUT		 2
+#define	GPIO_CLOCK		 3
+#define	SOFT_PWM_OUTPUT		 4
+#define	SOFT_TONE_OUTPUT	 5
+#define	PWM_TONE_OUTPUT		 6
+
 // Port function select bits
 
 #define	FSEL_INPT		0b000
@@ -403,16 +413,16 @@ int asus_get_pin_mode(int pin)
 		if(pin>=24)
 		{
 			if (*(gpio0[(pin+8)/32]+GPIO_SWPORTA_DDR_OFFSET/4) & 1<<((pin+8)%32))
-				func = GPIOOUT;
+				func = OUTPUT;
 			else
-				func = GPIOIN;
+				func = INPUT;
 		}
 		else
 		{
 			if (*(gpio0[pin/32]+GPIO_SWPORTA_DDR_OFFSET/4) & 1<<(pin%32))
-				func = GPIOOUT;
+				func = OUTPUT;
 			else
-				func = GPIOIN;
+				func = INPUT;
 		}
 	}
 	return func;
