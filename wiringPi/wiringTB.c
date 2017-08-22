@@ -493,6 +493,7 @@ void asus_set_pinmode_as_gpio(int pin)
 			break;
 		default:
 			printf("wrong gpio\n");
+			break;
 	}	//switch(pin)
 
 }
@@ -682,6 +683,7 @@ void asus_pullUpDnControl (int pin, int pud)
 			break;
 		default:
 			printf("wrong gpio\n");
+			break;
 	}	//switch(pin)
 }
 
@@ -990,6 +992,7 @@ void SetGpioMode(int pin, int alt)
 			break;
 		default:
 			printf("wrong gpio\n");
+			break;
 	}
 }
 
@@ -1036,6 +1039,8 @@ void asus_set_pinAlt(int pin, int alt)
 			break;
 		case FSEL_ALT5:
 			SetGpioMode(pin, 0x06);
+			break;
+		default:
 			break;
 	}
 }
