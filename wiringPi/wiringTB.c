@@ -563,7 +563,8 @@ void asus_set_pin_mode(int pin, int mode)
 
 void asus_digitalWrite(int pin, int value)
 {
-	if(value==1)
+	int v = (value > 0) ? 1 : 0;
+	if(v==1)
 	{
 		if(pin>=24)
 		{
