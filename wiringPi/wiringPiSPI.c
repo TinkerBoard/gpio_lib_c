@@ -38,8 +38,13 @@
 // The SPI bus parameters
 //	Variables as they need to be passed as pointers later on
 
+#ifdef TINKER_BOARD
+const static char       *spiDev0  = "/dev/spidev2.0" ;
+const static char       *spiDev1  = "/dev/spidev2.1" ;
+#else
 const static char       *spiDev0  = "/dev/spidev0.0" ;
 const static char       *spiDev1  = "/dev/spidev0.1" ;
+#endif
 const static uint8_t     spiBPW   = 8 ;
 const static uint16_t    spiDelay = 0 ;
 
