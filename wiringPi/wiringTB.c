@@ -809,9 +809,11 @@ void asus_set_gpioClockFreq(int pin, int freq)
 		printf("This pin cannot set as gpio clock\n");
 		return;
 	}
-	divi = 297000000 / freq ;
+	divi = 297000000 / freq - 1;
 	if (divi > 31)
 		divi = 31 ;
+	else if(divi < 0)
+		divi = 0;
 	*(cru+CRU_CLKSEL2_CON/4) = (*(cru+CRU_CLKSEL2_CON/4) & (~(0x1F<<8))) | 0x1f << (8+16) | (divi<<8);
 }
 
