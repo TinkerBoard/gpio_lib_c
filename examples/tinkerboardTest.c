@@ -87,7 +87,7 @@ int main()
     showAPIStatus("pinMode, digitalWrite [Check Pin 7 (LOW) by Oscilloscop]", 1);
     PAUSE
     pinMode(7, GPIO_CLOCK);
-    gpioClockSet(7, 5 * 1000000);
+    gpioClockSet(7, 10 * 1000000);
     showAPIStatus("pinMode, gpioClockSet [Check Pin 7 (10MHz) by Oscilloscop]", 1);
     PAUSE
     gpioClockSet(7, 20 * 1000000);
