@@ -22,7 +22,7 @@ sudo ./build
 It will build specific project you define in build. the default folder are `gpio`, `example`,...
 if you create new c file, you need to modify Makefile to compile it.
 
-If you want to build it by gcc directly, you need to add flag `-DASUS_TINKER`.
+If you want to build it by gcc directly, you need to add flag `-DTINKER_BOARD`.
   
 # Usage
  `gpio readall`
