@@ -1,5 +1,5 @@
 # GPIO_Lib_C
-  GPIO_LIB is a extension of Wiring, it can control low speed peripherial of Tinker Board.
+  GPIO_LIB is a extension of WiringPi, it can control low speed peripherial of Tinker Board.
   
 # Getting Source Code
 1. make sure network is work fine.
@@ -10,7 +10,7 @@
     ```
 3. download library from git
     ```shell
-    git clone https://github.com/TinkerBoard/GPIO_Lib.git
+    git clone https://github.com/TinkerBoard/gpio_lib_c.git
     ```
 
 # How to Build
@@ -56,7 +56,7 @@ If you want to build it by gcc directly, you need to add flag `-DTINKER_BOARD`.
 ```
 # Troubleshooting
 If you meet SSL issue as below 
-> "fatal: unable to access 'https://github.com/TinkerBoard/GPIO_Lib.git/': server certificate verification failed. CAfile: /etc/ssl/certs/ca-certificates.crt CRLfile: none"
+> "fatal: unable to access 'https://github.com/TinkerBoard/gpio_lib_c.git': server certificate verification failed. CAfile: /etc/ssl/certs/ca-certificates.crt CRLfile: none"
   
 short-term solution is `export GIT_SSL_NO_VERIFY=1`.
 # More Information
