@@ -111,9 +111,12 @@ int tinker_board_setup(int rev)
 	int i;
 	if ((mem_fd = open("/dev/mem", O_RDWR|O_SYNC) ) < 0) 
 	{
-		printf("can't open /dev/mem \n");
-		printf("wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno));
-		return -1;
+		if ((mem_fd = open ("/dev/gpiomem", O_RDWR | O_SYNC | O_CLOEXEC) ) < 0)
+		{
+			printf("can't open /dev/mem and /dev/gpiomem\n");
+			printf("wiringPiSetup: Unable to open /dev/mem and /dev/gpiomem: %s\n", strerror (errno));
+			return -1;
+		}
     }
 	for(i=0;i<9;i++)
     {
