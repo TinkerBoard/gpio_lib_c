@@ -631,7 +631,7 @@ void asus_pullUpDnControl (int pin, int pud)
 	{
 		//GPIO0
 		case 17 : 
-			*(pmu+PMU_GPIO0C_P/4) = ((*(grf+PMU_GPIO0C_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));
+			*(pmu+PMU_GPIO0C_P/4) = ((*(pmu+PMU_GPIO0C_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));
 			break;
 
 		//GPIO5B
