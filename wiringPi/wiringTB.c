@@ -597,12 +597,12 @@ int asus_digitalRead(int pin)
 	if(pin>=24)
 	{
 		mask = (1 << (pin-24)%32);
-		value = (((*(gpio0[(pin-24)/32+1]+GPIO_EXT_PORTA_OFFSET/4)) & mask)>>(pin-24)%32); 
+		value = (((*(gpio0[(pin-24)/32+1]+GPIO_EXT_PORTA_OFFSET/4)) & mask)>>((pin-24)%32)); 
 	}
 	else
 	{
 		mask = (1 << pin%32);
-		value = (((*(gpio0[pin/32]+GPIO_EXT_PORTA_OFFSET/4)) & mask)>>pin%32);
+		value = (((*(gpio0[pin/32]+GPIO_EXT_PORTA_OFFSET/4)) & mask)>>(pin%32));
 	}
 	return value;
 }

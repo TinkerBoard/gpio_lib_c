@@ -93,7 +93,7 @@ if [ x$1 = "xdebian" ]; then
   exit
 fi
 
-if [ x$1 != "x" ]; then
+if [ x$1 != "x" ] && [ x$1 != "xRockchip" ]; then
   echo "Usage: $0 [clean | uninstall]"
   exit 1
 fi
@@ -124,7 +124,7 @@ fi
   echo "WiringPi Library"
   cd wiringPi
   $sudo make uninstall
-  if [ x$hardware = "xRockchip" ]; then
+  if [ x$hardware = "xRockchip" ] || [ x$1 = "xRockchip" ] || [ x$2 = "xRockchip" ]; then
     if [ x$1 = "xstatic" ]; then
 	  make -j5 static DEFS='-D_GNU_SOURCE -DTINKER_BOARD'
       check_make_ok
@@ -165,7 +165,7 @@ fi
   echo
   echo "GPIO Utility"
   cd ../gpio
-  if [ x$hardware = "xRockchip" ]; then
+  if [ x$hardware = "xRockchip" ] || [ x$1 = "xRockchip" ] || [ x$2 = "xRockchip" ]; then
     make -j5 DEFS='-D_GNU_SOURCE -DTINKER_BOARD'
     check_make_ok
     $sudo make install DEFS='-D_GNU_SOURCE -DTINKER_BOARD'
