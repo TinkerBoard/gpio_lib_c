@@ -9,6 +9,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#define CONFIG_I2S_SHORT
+
 #define	PAGE_SIZE		(4*1024)
 #define	BLOCK_SIZE		(4*1024)
 
@@ -463,8 +465,15 @@ void asus_set_pinmode_as_gpio(int pin)
 			break;
 
 		//GPIO6A
-		case 184 : 
 		case 185 :
+			#ifdef CONFIG_I2S_SHORT
+			*(grf+GRF_GPIO6A_IOMUX/4) =  (*(grf+GRF_GPIO6A_IOMUX/4) | (0x0f<<((pin%8)*2+16))) & (~(0x0f<<((pin%8)*2)));
+			*(grf+GRF_GPIO6A_P/4) = ((*(grf+GRF_GPIO6A_P/4) | (0x03<<(((186)%8)*2+16))) & (~(0x03<<(((186)%8)*2)))) | (0<<(((186)%8)*2+1)) | (0<<(((186)%8)*2));
+			#else
+			*(grf+GRF_GPIO6A_IOMUX/4) =  (*(grf+GRF_GPIO6A_IOMUX/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)));
+			#endif
+			break;
+		case 184 : 
 		case 187 :
 		case 188 :
 			*(grf+GRF_GPIO6A_IOMUX/4) =  (*(grf+GRF_GPIO6A_IOMUX/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)));
@@ -964,8 +973,14 @@ void SetGpioMode(int pin, int alt)
 			break;
 
 		//GPIO6A
-		case 184 : 
 		case 185 :
+			#ifdef CONFIG_I2S_SHORT
+			*(grf+GRF_GPIO6A_IOMUX/4) =  (*(grf+GRF_GPIO6A_IOMUX/4) | (0x0f<<((pin%8)*2+16)) | (0xf << ((pin % 8)*2))) & (~((alt | (alt<<2))<<((pin%8)*2)));
+			#else
+			*(grf+GRF_GPIO6A_IOMUX/4) =  (*(grf+GRF_GPIO6A_IOMUX/4) | (0x03<<((pin%8)*2+16)) | (0x3 << ((pin % 8)*2))) & (~(alt<<((pin%8)*2)));
+			#endif
+			break;
+		case 184 :
 		case 187 :
 		case 188 :
 			*(grf+GRF_GPIO6A_IOMUX/4) =  (*(grf+GRF_GPIO6A_IOMUX/4) | (0x03<<((pin%8)*2+16)) | (0x3 << ((pin % 8)*2))) & (~(alt<<((pin%8)*2)));
