@@ -123,7 +123,11 @@ int tinker_board_setup(int rev)
 	for(i=0;i<9;i++)
     {
 		// mmap GPIO 
+		#ifdef ANDROID
+		gpio_map0[i] = mmap64(
+		#else
 		gpio_map0[i] = mmap(
+		#endif
 			NULL,             // Any adddress in our space will do 
 			PAGE_SIZE,       // Map length 
 			PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory 
@@ -139,7 +143,11 @@ int tinker_board_setup(int rev)
 		gpio0[i] = (volatile unsigned *)gpio_map0[i];
    	}//for
 	/////////////mmap grf////////////
+	#ifdef ANDROID
+	grf_map = mmap64(
+	#else
 	grf_map = mmap(
+	#endif
 		NULL,             // Any adddress in our space will do 
 		PAGE_SIZE,       // Map length 
 		PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory 
@@ -155,7 +163,11 @@ int tinker_board_setup(int rev)
     grf = (volatile unsigned *)grf_map;
 	////////////////////////////  
 	////////////mmap pwm////////
+	#ifdef ANDROID
+	pwm_map = mmap64(
+	#else
 	pwm_map = mmap(
+	#endif
 		NULL,             // Any adddress in our space will do 
 		PAGE_SIZE,       // Map length 
 		PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory 
@@ -171,7 +183,11 @@ int tinker_board_setup(int rev)
     pwm = (volatile unsigned *)pwm_map;
 	////////////////////////////
 	////////////mmap pmu//////////
+	#ifdef ANDROID
+	pmu_map = mmap64(
+	#else
 	pmu_map = mmap(
+	#endif
 		NULL,             // Any adddress in our space will do 
 		PAGE_SIZE,       // Map length 
 		PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory 
@@ -187,7 +203,11 @@ int tinker_board_setup(int rev)
     pmu = (volatile unsigned *)pmu_map;
 	///////////////////////////////
 	////////////mmap cru//////////
+	#ifdef ANDROID
+	cru_map = mmap64(
+	#else
 	cru_map = mmap(
+	#endif
 		NULL,             // Any adddress in our space will do
 		PAGE_SIZE,       // Map length
 		PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory
