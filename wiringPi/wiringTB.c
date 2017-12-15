@@ -225,10 +225,23 @@ int tinker_board_setup(int rev)
 	close(mem_fd); // No need to keep mem_fdcru open after mmap
 	return 0;
 }
-
+int gpioToBank(int gpio)
+{
+	if(gpio < 24)
+		return 0;
+	else
+		return (int)((gpio - 24) / 32) + 1;
+}
 int asus_get_pin_mode(int pin)
 {
 	int value, func;
+	int bank, bank_clk_en;
+	bank = gpioToBank(pin);
+	if (bank != 0)
+	{
+		bank_clk_en = (*(cru+CRU_CLKGATE14_CON/4) >> bank) & 0x1;
+		*(cru+CRU_CLKGATE14_CON/4) = (*(cru+CRU_CLKGATE14_CON/4) & ~(0x1 << bank)) | (0x1 << (16 + bank));
+	}
 	switch(pin)
 	{
 		//GPIO0
@@ -450,6 +463,10 @@ int asus_get_pin_mode(int pin)
 				func = INPUT;
 		}
 	}
+	if (bank != 0)
+	{
+		*(cru+CRU_CLKGATE14_CON/4) = (*(cru+CRU_CLKGATE14_CON/4) | (bank_clk_en << bank)) | (0x1 << (16 + bank));
+	}
 	return func;
 }
 
@@ -542,6 +559,13 @@ void asus_set_pinmode_as_gpio(int pin)
 
 void asus_set_pin_mode(int pin, int mode)
 {
+	int bank, bank_clk_en;
+	bank = gpioToBank(pin);
+	if (bank != 0)
+	{
+		bank_clk_en = (*(cru+CRU_CLKGATE14_CON/4) >> bank) & 0x1;
+		*(cru+CRU_CLKGATE14_CON/4) = (*(cru+CRU_CLKGATE14_CON/4) & ~(0x1 << bank)) | (0x1 << (16 + bank));
+	}
 	if(INPUT == mode)
 	{
 		asus_set_pinmode_as_gpio(pin);
@@ -591,10 +615,21 @@ void asus_set_pin_mode(int pin, int mode)
 		else
 			printf("This pin cannot set as gpio clock\n");
 	}
+	if (bank != 0)
+	{
+		*(cru+CRU_CLKGATE14_CON/4) = (*(cru+CRU_CLKGATE14_CON/4) | (bank_clk_en << bank)) | (0x1 << (16 + bank));
+	}
 }
 
 void asus_digitalWrite(int pin, int value)
 {
+	int bank, bank_clk_en;
+	bank = gpioToBank(pin);
+	if (bank != 0)
+	{
+		bank_clk_en = (*(cru+CRU_CLKGATE14_CON/4) >> bank) & 0x1;
+		*(cru+CRU_CLKGATE14_CON/4) = (*(cru+CRU_CLKGATE14_CON/4) & ~(0x1 << bank)) | (0x1 << (16 + bank));
+	}
 	if(value > 0)
 	{
 		if(pin>=24)
@@ -618,11 +653,22 @@ void asus_digitalWrite(int pin, int value)
 		}
 			
 	}
+	if (bank != 0)
+	{
+		*(cru+CRU_CLKGATE14_CON/4) = (*(cru+CRU_CLKGATE14_CON/4) | (bank_clk_en << bank)) | (0x1 << (16 + bank));
+	}
 }
 
 int asus_digitalRead(int pin)
 {
 	int value, mask;
+	int bank, bank_clk_en;
+	bank = gpioToBank(pin);
+	if (bank != 0)
+	{
+		bank_clk_en = (*(cru+CRU_CLKGATE14_CON/4) >> bank) & 0x1;
+		*(cru+CRU_CLKGATE14_CON/4) = (*(cru+CRU_CLKGATE14_CON/4) & ~(0x1 << bank)) | (0x1 << (16 + bank));
+	}
 	if(pin>=24)
 	{
 		mask = (1 << (pin-24)%32);
@@ -632,6 +678,10 @@ int asus_digitalRead(int pin)
 	{
 		mask = (1 << pin%32);
 		value = (((*(gpio0[pin/32]+GPIO_EXT_PORTA_OFFSET/4)) & mask)>>(pin%32));
+	}
+	if (bank != 0)
+	{
+		*(cru+CRU_CLKGATE14_CON/4) = (*(cru+CRU_CLKGATE14_CON/4) | (bank_clk_en << bank)) | (0x1 << (16 + bank));
 	}
 	return value;
 }
@@ -852,6 +902,13 @@ void asus_set_gpioClockFreq(int pin, int freq)
 int asus_get_pinAlt(int pin)
 {
 	int alt;
+	int bank, bank_clk_en;
+	bank = gpioToBank(pin);
+	if (bank != 0)
+	{
+		bank_clk_en = (*(cru+CRU_CLKGATE14_CON/4) >> bank) & 0x1;
+		*(cru+CRU_CLKGATE14_CON/4) = (*(cru+CRU_CLKGATE14_CON/4) & ~(0x1 << bank)) | (0x1 << (16 + bank));
+	}
 	switch(pin)
 	{
 		//GPIO0
@@ -957,6 +1014,10 @@ int asus_get_pinAlt(int pin)
 				alt = FSEL_INPT;
 		}
     }
+	if (bank != 0)
+	{
+		*(cru+CRU_CLKGATE14_CON/4) = (*(cru+CRU_CLKGATE14_CON/4) | (bank_clk_en << bank)) | (0x1 << (16 + bank));
+	}
 	return alt;
 }
 
@@ -1048,6 +1109,13 @@ void SetGpioMode(int pin, int alt)
 
 void asus_set_pinAlt(int pin, int alt)
 {
+	int bank, bank_clk_en;
+	bank = gpioToBank(pin);
+	if (bank != 0)
+	{
+		bank_clk_en = (*(cru+CRU_CLKGATE14_CON/4) >> bank) & 0x1;
+		*(cru+CRU_CLKGATE14_CON/4) = (*(cru+CRU_CLKGATE14_CON/4) & ~(0x1 << bank)) | (0x1 << (16 + bank));
+	}
 	switch(alt)
 	{
 		case FSEL_INPT:
@@ -1092,6 +1160,10 @@ void asus_set_pinAlt(int pin, int alt)
 			break;
 		default:
 			break;
+	}
+	if (bank != 0)
+	{
+		*(cru+CRU_CLKGATE14_CON/4) = (*(cru+CRU_CLKGATE14_CON/4) | (bank_clk_en << bank)) | (0x1 << (16 + bank));
 	}
 }
 

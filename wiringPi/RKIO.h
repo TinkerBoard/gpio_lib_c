@@ -129,8 +129,8 @@
 #define GPIO_LS_SYNC_OFFSET		0x0060
 
 #define RK3288_CRU			0xff760000
-#define CRU_CLKSEL2_CON			0x0068
-
+#define CRU_CLKSEL2_CON				0x0068
+#define CRU_CLKGATE14_CON			0x0198
 //#define PWM0 26
 //#define PWM1 27
 #define PWM2 GPIO7_C6
