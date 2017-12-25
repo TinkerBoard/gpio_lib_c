@@ -911,6 +911,10 @@ void piBoardId (int *model, int *rev, int *mem, int *maker, int *warranty)
 		if (wiringPiDebug)
 			printf ("piBoardId: 2: revision is: %s\n", c) ;
 		// Fill out the replys as appropriate
+		#ifdef TINKER_BOARD
+		/**/ if (strcmp (c, "0000") == 0) { *model = PI_MODEL_TB ; *rev = PI_VERSION_1_2 ; *mem = 3 ; *maker = PI_MAKER_ASUS	; }
+		else                              { *model = PI_MODEL_TB ; *rev = 0              ; *mem = 0 ; *maker = PI_MAKER_ASUS	; }
+		#else
 		/**/ if (strcmp (c, "0002") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_1   ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
 		else if (strcmp (c, "0003") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_1_1 ; *mem = 0 ; *maker = PI_MAKER_EGOMAN  ; }
 		else if (strcmp (c, "0004") == 0) { *model = PI_MODEL_B  ; *rev = PI_VERSION_2   ; *mem = 0 ; *maker = PI_MAKER_SONY    ; }
@@ -928,8 +932,8 @@ void piBoardId (int *model, int *rev, int *mem, int *maker, int *warranty)
 		else if (strcmp (c, "0013") == 0) { *model = PI_MODEL_BP ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_EGOMAN  ; }
 		else if (strcmp (c, "0014") == 0) { *model = PI_MODEL_CM ; *rev = PI_VERSION_1_2 ; *mem = 1 ; *maker = PI_MAKER_SONY    ; }
 		else if (strcmp (c, "0015") == 0) { *model = PI_MODEL_AP ; *rev = PI_VERSION_1_1 ; *mem = 0 ; *maker = PI_MAKER_SONY    ; }
-		else if (strcmp (c, "0000") == 0) { *model = PI_MODEL_TB ; *rev = PI_VERSION_1_2 ; *mem = 3 ; *maker = PI_MAKER_ASUS	; }
 		else                              { *model = 0           ; *rev = 0              ; *mem = 0 ; *maker = 0 				; }
+		#endif
 	}
 }
  
@@ -1859,6 +1863,13 @@ int wiringPiISR (int pin, int mode, void (*function)(void))
 				execl ("/usr/bin/gpio", "gpio", "edge", pinS, modeS, (char *)NULL) ;
 				return wiringPiFailure (WPI_FATAL, "wiringPiISR: execl failed: %s\n", strerror (errno)) ;
 			}
+#ifdef ANDROID
+			else if (access ("/system/bin/gpio", X_OK) == 0) //Android
+			{
+				execl ("/system/bin/gpio", "gpio", "edge", pinS, modeS, (char *)NULL) ;
+					return wiringPiFailure (WPI_FATAL, "wiringPiISR: execl failed: %s\n", strerror (errno)) ;
+			}
+#endif			  
 			else
 				return wiringPiFailure (WPI_FATAL, "wiringPiISR: Can't find gpio program\n") ;
 		}
