@@ -135,7 +135,7 @@ int tinker_board_setup(int rev)
 			mem_fd,           // File to map 
 			RK3288_GPIO(i)         //Offset to GPIO peripheral 
 		);
-		if ((uint32_t)gpio_map0[i] < 0)
+		if (gpio_map0[i] == MAP_FAILED)
 		{
 			printf("wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno));
 			return -1;
@@ -155,7 +155,7 @@ int tinker_board_setup(int rev)
 		mem_fd,           // File to map 
 		RK3288_GRF_PHYS         //Offset to GPIO peripheral 
 	);
-	if ((uint32_t)grf_map < 0)
+	if (grf_map  == MAP_FAILED)
 	{
 		printf("wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno));
 		return -1;
@@ -175,7 +175,7 @@ int tinker_board_setup(int rev)
 		mem_fd,           // File to map 
 		RK3288_PWM         //Offset to GPIO peripheral 
 	);
-	if ((uint32_t)pwm_map < 0)
+	if (pwm_map == MAP_FAILED)
 	{
 		printf("wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno));
 		return -1;
@@ -195,7 +195,7 @@ int tinker_board_setup(int rev)
 		mem_fd,           // File to map 
 		RK3288_PMU         //Offset to GPIO peripheral 
 	);
-	if ((uint32_t)pmu_map < 0)
+	if (pmu_map == MAP_FAILED)
 	{
 		printf("wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno));
 		return -1;
@@ -215,7 +215,7 @@ int tinker_board_setup(int rev)
 		mem_fd,           // File to map
 		RK3288_CRU         //Offset to GPIO peripheral
 	);
-	if ((uint32_t)cru_map < 0)
+	if (cru_map == MAP_FAILED)
 	{
 		printf("wiringPiSetup: Unable to open /dev/mem: %s\n", strerror (errno));
 		return -1;
