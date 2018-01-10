@@ -811,8 +811,8 @@ void asus_set_pwmClock(int divisor)
 {
 	*(pwm+RK3288_PWM0_CTR/4+2*4) &= ~(1<<0);	//Disable PWM2
 	*(pwm+RK3288_PWM0_CTR/4+3*4) &= ~(1<<0);	//Disable PWM3	
-	*(pwm+RK3288_PWM0_CTR/4+2*4) = (*(pwm+RK3288_PWM0_CTR/4+2*4) & ~(0xff << 16)) | ((divisor/2) << 16) | (1<<9) ;
-	*(pwm+RK3288_PWM0_CTR/4+3*4) = (*(pwm+RK3288_PWM0_CTR/4+3*4) & ~(0xff << 16)) | ((divisor/2) << 16) | (1<<9) ;
+	*(pwm+RK3288_PWM0_CTR/4+2*4) = (*(pwm+RK3288_PWM0_CTR/4+2*4) & ~(0xff << 16)) | ((0xff & (divisor/2)) << 16) | (1<<9) ;
+	*(pwm+RK3288_PWM0_CTR/4+3*4) = (*(pwm+RK3288_PWM0_CTR/4+3*4) & ~(0xff << 16)) | ((0xff & (divisor/2)) << 16) | (1<<9) ;
 	*(pwm+RK3288_PWM0_CTR/4+2*4) |= (1<<0); //Enable PWM2
 	*(pwm+RK3288_PWM0_CTR/4+3*4) |= (1<<0); //Enable PWM3
 }
@@ -861,6 +861,8 @@ void asus_pwmToneWrite(int pin, int freq)
 		case PWM3:divi=((*(pwm+RK3288_PWM0_CTR/4+3*4) >> 16) & 0xff) << 1; break;
 		default:divi=-1;break;
 	}
+	if(divi == 0)
+		divi = 512;
 	if (freq == 0)
 		asus_pwm_write (pin, 0) ;
 	else
