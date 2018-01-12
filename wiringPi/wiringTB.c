@@ -693,19 +693,13 @@ void asus_digitalWrite(int pin, int value)
 
 int asus_digitalRead(int pin)
 {
-	int value, mask;
+	int value;
 	int bank_clk_en;
+	int bank, bank_pin;
+	bank = gpioToBank(pin);
+	bank_pin = gpioToBankPin(pin);
 	bank_clk_en = gpio_clk_disable(pin);
-	if(pin>=24)
-	{
-		mask = (1 << (pin-24)%32);
-		value = (((*(gpio0[(pin-24)/32+1]+GPIO_EXT_PORTA_OFFSET/4)) & mask)>>((pin-24)%32)); 
-	}
-	else
-	{
-		mask = (1 << pin%32);
-		value = (((*(gpio0[pin/32]+GPIO_EXT_PORTA_OFFSET/4)) & mask)>>(pin%32));
-	}
+	value = (((*(gpio0[bank]+GPIO_EXT_PORTA_OFFSET/4)) & (1 << bank_pin)) >> bank_pin); 
 	gpio_clk_recovery(pin, bank_clk_en);
 	return value;
 }
