@@ -812,34 +812,72 @@ int asus_get_pwm_value(int pin)
 	}
 }
 
-void asus_set_pwmRange(unsigned int range)
+void asus_set_pwmNRange(int pin, unsigned int range)
 {
-	int pwm2_value = asus_get_pwm_value(PWM2);
-	int pwm3_value = asus_get_pwm_value(PWM3);
-	*(pwm+RK3288_PWM2_CTR/4) &= ~(1<<0);	//Disable PWM2
-	*(pwm+RK3288_PWM3_CTR/4) &= ~(1<<0);	//Disable PWM3		
-	*(pwm+RK3288_PWM2_PERIOD/4) = range;	//Set period PWM2
-	*(pwm+RK3288_PWM3_PERIOD/4) = range;	//Set period PWM3
-	*(pwm+RK3288_PWM2_CTR/4) |= (1<<0); //Enable PWM2
-	*(pwm+RK3288_PWM3_CTR/4) |= (1<<0); //Enable PWM3
-	if(pwm2_value != -1)
-		asus_pwm_write(PWM2, pwm2_value);
-	if(pwm3_value != -1)
-		asus_pwm_write(PWM3, pwm3_value);
+	int pwm_value;
+	int PWM_CTRL_OFFSET = -1;
+	int PWM_PERIOD_OFFSET = -1;
+	switch (pin)
+	{
+		case PWM2:
+			PWM_CTRL_OFFSET=RK3288_PWM2_CTR;
+			PWM_PERIOD_OFFSET=RK3288_PWM2_PERIOD;
+			break;
+		case PWM3:
+			PWM_CTRL_OFFSET=RK3288_PWM3_CTR;
+			PWM_PERIOD_OFFSET=RK3288_PWM3_PERIOD;
+			break;
+		default:
+			break;
+	}
+	if(asus_get_pin_mode(pin)==PWM && PWM_CTRL_OFFSET != -1 && PWM_PERIOD_OFFSET != -1)
+	{
+		pwm_value = asus_get_pwm_value(pin);
+		*(pwm+PWM_CTRL_OFFSET/4) &= ~(1<<0);	//Disable PWM
+		*(pwm+PWM_PERIOD_OFFSET/4) = range;		//Set period PWM
+		*(pwm+PWM_CTRL_OFFSET/4) |= (1<<0); 	//Enable PWM
+		if(pwm_value != -1)
+			asus_pwm_write(pin, pwm_value);
+	}
 }
 
-void asus_set_pwmClock(int divisor)
+void asus_set_pwmRange(unsigned int range)
 {
+	asus_set_pwmNRange(PWM2, range);
+	asus_set_pwmNRange(PWM3, range);
+}
+
+void asus_set_pwmNClock(int pin, int divisor)
+{
+	int PWM_CTRL_OFFSET = -1;
+	switch (pin)
+	{
+		case PWM2:
+			PWM_CTRL_OFFSET=RK3288_PWM2_CTR;
+			break;
+		case PWM3:
+			PWM_CTRL_OFFSET=RK3288_PWM3_CTR;
+			break;
+		default:
+			break;
+	}
 	if (divisor > 0xff)
 		divisor = 0x100;
 	else if(divisor < 2)
 		divisor = 0x02;
-	*(pwm+RK3288_PWM2_CTR/4) &= ~(1<<0);	//Disable PWM2
-	*(pwm+RK3288_PWM3_CTR/4) &= ~(1<<0);	//Disable PWM3	
-	*(pwm+RK3288_PWM2_CTR/4) = (*(pwm+RK3288_PWM2_CTR/4) & ~(0xff << 16)) | ((0xff & (divisor/2)) << 16) | (1<<9) ;	//PWM2 div
-	*(pwm+RK3288_PWM3_CTR/4) = (*(pwm+RK3288_PWM3_CTR/4) & ~(0xff << 16)) | ((0xff & (divisor/2)) << 16) | (1<<9) ;	//PWM3 div
-	*(pwm+RK3288_PWM2_CTR/4) |= (1<<0); //Enable PWM2
-	*(pwm+RK3288_PWM3_CTR/4) |= (1<<0); //Enable PWM3
+	if(asus_get_pin_mode(pin)==PWM && PWM_CTRL_OFFSET != -1)
+	{
+		*(pwm+PWM_CTRL_OFFSET/4) &= ~(1<<0);	//Disable PWM	
+		*(pwm+PWM_CTRL_OFFSET/4) = (*(pwm+PWM_CTRL_OFFSET/4) & ~(0xff << 16)) | ((0xff & (divisor/2)) << 16) | (1<<9) ;	//PWM div
+		*(pwm+PWM_CTRL_OFFSET/4) |= (1<<0); //Enable PWM
+	}
+}
+
+
+void asus_set_pwmClock(int divisor)
+{
+	asus_set_pwmNClock(PWM2, divisor);
+	asus_set_pwmNClock(PWM3, divisor);
 }
 
 void asus_pwm_write(int pin, int value)
