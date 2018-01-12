@@ -233,6 +233,14 @@ int gpioToBank(int gpio)
 		return (int)((gpio - 24) / 32) + 1;
 }
 
+int gpioToBankPin(int gpio)
+{
+	if(gpio < 24)
+		return gpio;
+	else
+		return (gpio - 24) % 32;
+}
+
 int gpio_is_valid(int gpio)
 {
 	switch (gpio)
@@ -269,14 +277,6 @@ int gpio_is_valid(int gpio)
 		default:
 			return 0;
 	}
-}
-
-int gpioToBankPin(int gpio)
-{
-	if(gpio < 24)
-		return gpio;
-	else
-		return (gpio - 24) % 32;
 }
 
 int gpio_clk_disable(int gpio)
@@ -1162,30 +1162,21 @@ void SetGpioMode(int pin, int alt)
 void asus_set_pinAlt(int pin, int alt)
 {
 	int bank_clk_en;
+	int bank, bank_pin;
+	if(!gpio_is_valid(pin))
+		return;
+	bank = gpioToBank(pin);
+	bank_pin = gpioToBankPin(pin);
 	bank_clk_en = gpio_clk_disable(pin);
 	switch(alt)
 	{
 		case FSEL_INPT:
 			SetGpioMode(pin, 0x00);
-			if(pin>=24)
-			{
-				*(gpio0[(pin+8)/32]+GPIO_SWPORTA_DDR_OFFSET/4) &= ~(1<<((pin+8)%32));
-			}
-			else
-			{
-				*(gpio0[pin/32]+GPIO_SWPORTA_DDR_OFFSET/4) &= ~(1<<(pin%32));
-			}
+			*(gpio0[bank]+GPIO_SWPORTA_DDR_OFFSET/4) &= ~(1<<bank_pin);
 			break;
 		case FSEL_OUTP:
 			SetGpioMode(pin, 0x00);
-			if(pin>=24)
-			{
-				*(gpio0[(pin+8)/32]+GPIO_SWPORTA_DDR_OFFSET/4) |= (1<<((pin+8)%32));
-			}
-			else
-			{
-				*(gpio0[pin/32]+GPIO_SWPORTA_DDR_OFFSET/4) |= (1<<(pin%32));
-			}
+			*(gpio0[bank]+GPIO_SWPORTA_DDR_OFFSET/4) |= (1<<bank_pin);
 			break;
 		case FSEL_ALT0:
 			SetGpioMode(pin, 0x01);
