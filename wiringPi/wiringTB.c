@@ -674,29 +674,19 @@ void asus_set_pin_mode(int pin, int mode)
 void asus_digitalWrite(int pin, int value)
 {
 	int bank_clk_en;
+	int bank, bank_pin;
+	if(!gpio_is_valid(pin))
+		return;
+	bank = gpioToBank(pin);
+	bank_pin = gpioToBankPin(pin);
 	bank_clk_en = gpio_clk_disable(pin);
 	if(value > 0)
 	{
-		if(pin>=24)
-		{
-			*(gpio0[(pin+8)/32]+GPIO_SWPORTA_DR_OFFSET/4) |= (1<<((pin-24)%32));
-		}
-		else
-		{
-			*(gpio0[pin/32]+GPIO_SWPORTA_DR_OFFSET/4) |= (1<<(pin%32));
-		}	
+		*(gpio0[bank]+GPIO_SWPORTA_DR_OFFSET/4) |= (1<<bank_pin);
 	}
 	else
 	{
-		if(pin>=24)
-		{
-			*(gpio0[(pin+8)/32]+GPIO_SWPORTA_DR_OFFSET/4) &= ~(1<<((pin-24)%32));
-		}
-		else
-		{
-			*(gpio0[pin/32]+GPIO_SWPORTA_DR_OFFSET/4) &= ~(1<<(pin%32));
-		}
-			
+		*(gpio0[bank]+GPIO_SWPORTA_DR_OFFSET/4) &= ~(1<<bank_pin);
 	}
 	gpio_clk_recovery(pin, bank_clk_en);
 }
