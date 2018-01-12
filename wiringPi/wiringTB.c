@@ -11,7 +11,6 @@
 
 #define CONFIG_I2S_SHORT
 
-#define	PAGE_SIZE		(4*1024)
 #define	BLOCK_SIZE		(4*1024)
 
 // Pin modes
@@ -129,7 +128,7 @@ int tinker_board_setup(int rev)
 		gpio_map0[i] = mmap(
 		#endif
 			NULL,             // Any adddress in our space will do 
-			PAGE_SIZE,       // Map length 
+			BLOCK_SIZE,       // Map length 
 			PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory 
 			MAP_SHARED,       // Shared with other processes 
 			mem_fd,           // File to map 
@@ -149,7 +148,7 @@ int tinker_board_setup(int rev)
 	grf_map = mmap(
 	#endif
 		NULL,             // Any adddress in our space will do 
-		PAGE_SIZE,       // Map length 
+		BLOCK_SIZE,       // Map length 
 		PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory 
 		MAP_SHARED,       // Shared with other processes 
 		mem_fd,           // File to map 
@@ -169,7 +168,7 @@ int tinker_board_setup(int rev)
 	pwm_map = mmap(
 	#endif
 		NULL,             // Any adddress in our space will do 
-		PAGE_SIZE,       // Map length 
+		BLOCK_SIZE,       // Map length 
 		PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory 
 		MAP_SHARED,       // Shared with other processes 
 		mem_fd,           // File to map 
@@ -189,7 +188,7 @@ int tinker_board_setup(int rev)
 	pmu_map = mmap(
 	#endif
 		NULL,             // Any adddress in our space will do 
-		PAGE_SIZE,       // Map length 
+		BLOCK_SIZE,       // Map length 
 		PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory 
 		MAP_SHARED,       // Shared with other processes 
 		mem_fd,           // File to map 
@@ -209,7 +208,7 @@ int tinker_board_setup(int rev)
 	cru_map = mmap(
 	#endif
 		NULL,             // Any adddress in our space will do
-		PAGE_SIZE,       // Map length
+		BLOCK_SIZE,       // Map length
 		PROT_READ|PROT_WRITE, // Enable reading & writting to mapped memory
 		MAP_SHARED,       // Shared with other processes
 		mem_fd,           // File to map

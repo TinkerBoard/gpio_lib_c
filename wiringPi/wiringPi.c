@@ -148,7 +148,6 @@ static volatile unsigned int GPIO_BASE ;
 static volatile unsigned int GPIO_TIMER ;
 static volatile unsigned int GPIO_PWM ;
 
-#define	PAGE_SIZE		(4*1024)
 #define	BLOCK_SIZE		(4*1024)
 
 // PWM
