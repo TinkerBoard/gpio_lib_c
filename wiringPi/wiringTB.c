@@ -618,30 +618,21 @@ void asus_set_pinmode_as_gpio(int pin)
 void asus_set_pin_mode(int pin, int mode)
 {
 	int bank_clk_en;
+	int bank, bank_pin;
+	if(!gpio_is_valid(pin))
+		return;
+	bank = gpioToBank(pin);
+	bank_pin = gpioToBankPin(pin);
 	bank_clk_en = gpio_clk_disable(pin);
 	if(INPUT == mode)
 	{
 		asus_set_pinmode_as_gpio(pin);
-		if(pin>=24)
-		{
-			*(gpio0[(pin+8)/32]+GPIO_SWPORTA_DDR_OFFSET/4) &= ~(1<<((pin+8)%32));
-		}
-		else
-		{
-			*(gpio0[pin/32]+GPIO_SWPORTA_DDR_OFFSET/4) &= ~(1<<(pin%32));
-		}
+		*(gpio0[bank]+GPIO_SWPORTA_DDR_OFFSET/4) &= ~(1<<bank_pin);
 	}
 	else if(OUTPUT == mode)
 	{
 		asus_set_pinmode_as_gpio(pin);
-		if(pin>=24)
-		{
-			*(gpio0[(pin+8)/32]+GPIO_SWPORTA_DDR_OFFSET/4) |= (1<<((pin+8)%32));
-		}
-		else
-		{
-			*(gpio0[pin/32]+GPIO_SWPORTA_DDR_OFFSET/4) |= (1<<(pin%32));
-		}
+		*(gpio0[bank]+GPIO_SWPORTA_DDR_OFFSET/4) |= (1<<bank_pin);
 	} 
 	else if(PWM_OUTPUT == mode)
 	{
