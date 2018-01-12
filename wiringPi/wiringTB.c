@@ -233,6 +233,14 @@ int gpioToBank(int gpio)
 		return (int)((gpio - 24) / 32) + 1;
 }
 
+int gpioToBankPin(int gpio)
+{
+	if(gpio < 24)
+		return gpio;
+	else
+		return (gpio - 24) % 32;
+}
+
 int gpio_clk_disable(int gpio)
 {
 	int bank, bank_clk_en;
@@ -252,7 +260,7 @@ void gpio_clk_recovery(int gpio, int flag)
 	write_bit = (bank != 0) ? bank : 4;
 	reg_offset = (bank != 0) ? CRU_CLKGATE14_CON : CRU_CLKGATE17_CON;
 	*(cru+reg_offset/4) = (*(cru+reg_offset/4) | (flag << write_bit)) | (0x1 << (16 + write_bit));
-}
+} 
 int asus_get_pin_mode(int pin)
 {
 	int value, func;
