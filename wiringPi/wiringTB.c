@@ -302,6 +302,9 @@ int asus_get_pin_mode(int pin)
 {
 	int value, func;
 	int bank_clk_en;
+	int bank, bank_pin;
+	bank = gpioToBank(pin);
+	bank_pin = gpioToBankPin(pin);
 	bank_clk_en = gpio_clk_disable(pin);
 	switch(pin)
 	{
@@ -509,20 +512,10 @@ int asus_get_pin_mode(int pin)
 	}
     if (func == GPIO)
     {
-		if(pin>=24)
-		{
-			if (*(gpio0[(pin+8)/32]+GPIO_SWPORTA_DDR_OFFSET/4) & 1<<((pin+8)%32))
-				func = OUTPUT;
-			else
-				func = INPUT;
-		}
+		if (*(gpio0[bank]+GPIO_SWPORTA_DDR_OFFSET/4) & (1<<bank_pin))
+			func = OUTPUT;
 		else
-		{
-			if (*(gpio0[pin/32]+GPIO_SWPORTA_DDR_OFFSET/4) & 1<<(pin%32))
-				func = OUTPUT;
-			else
-				func = INPUT;
-		}
+			func = INPUT;
 	}
 	gpio_clk_recovery(pin, bank_clk_en);
 	return func;
