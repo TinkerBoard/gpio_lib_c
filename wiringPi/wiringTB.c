@@ -962,6 +962,9 @@ int asus_get_pinAlt(int pin)
 {
 	int alt;
 	int bank_clk_en;
+	int bank, bank_pin;
+	bank = gpioToBank(pin);
+	bank_pin = gpioToBankPin(pin);
 	bank_clk_en = gpio_clk_disable(pin);
 	switch(pin)
 	{
@@ -1053,20 +1056,10 @@ int asus_get_pinAlt(int pin)
 	}
     if (alt == 0)
     {
-		if(pin>=24)
-		{
-			if (*(gpio0[(pin+8)/32]+GPIO_SWPORTA_DDR_OFFSET/4) & 1<<((pin+8)%32))
-				alt = FSEL_OUTP;
-			else
-				alt = FSEL_INPT;
-		}
+		if (*(gpio0[bank]+GPIO_SWPORTA_DDR_OFFSET/4) & (1<<bank_pin))
+			alt = FSEL_OUTP;
 		else
-		{
-			if (*(gpio0[pin/32]+GPIO_SWPORTA_DDR_OFFSET/4) & 1<<(pin%32))
-				alt = FSEL_OUTP;
-			else
-				alt = FSEL_INPT;
-		}
+			alt = FSEL_INPT;
     }
 	gpio_clk_recovery(pin, bank_clk_en);
 	return alt;
