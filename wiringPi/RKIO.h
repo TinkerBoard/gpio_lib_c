@@ -95,6 +95,30 @@
 #define GRF_GPIO8A_P	0x01b0
 #define GRF_GPIO8B_P	0x01b4
 
+/* Drive Strength */
+#define GRF_GPIO1D_E	0x01cc
+#define GRF_GPIO2A_E	0x01d0
+#define GRF_GPIO2B_E	0x01d4
+#define GRF_GPIO2C_E	0x01d8
+#define GRF_GPIO3A_E	0x01e0
+#define GRF_GPIO3B_E	0x01e4
+#define GRF_GPIO3C_E	0x01e8
+#define GRF_GPIO3D_E	0x01ec
+#define GRF_GPIO4A_E	0x01f0
+#define GRF_GPIO4B_E	0x01f4
+#define GRF_GPIO4C_E	0x01f8
+#define GRF_GPIO4D_E	0x01fc
+#define GRF_GPIO5B_E	0x0204
+#define GRF_GPIO5C_E	0x0208
+#define GRF_GPIO6A_E	0x0210
+#define GRF_GPIO6B_E	0x0214
+#define GRF_GPIO6C_E	0x0218
+#define GRF_GPIO7A_E	0x0220
+#define GRF_GPIO7B_E	0x0224
+#define GRF_GPIO7C_E	0x0228
+#define GRF_GPIO8A_E	0x0230
+#define GRF_GPIO8B_E	0x0234
+
 
 #define RK3288_PWM 			0xff680000
 #define RK3288_PWM0_CNT			0x0000

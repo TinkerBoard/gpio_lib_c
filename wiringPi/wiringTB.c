@@ -107,6 +107,23 @@ int* asus_get_pinToGpio(int rev)
 	return pinToGpio_AP;
 }
 
+int GET_GRF_DRV_OFFSET(int bank, int pin)
+{
+	int GRF_DRV_TABLE [9][4] =
+	{
+		{		   -1,           -1,           -1,           -1},	//Bank 0
+		{		   -1,           -1,           -1, GRF_GPIO1D_E},	//Bank 1
+		{GRF_GPIO2A_E, GRF_GPIO2B_E, GRF_GPIO2C_E,           -1},	//Bank 2
+		{GRF_GPIO3A_E, GRF_GPIO3B_E, GRF_GPIO3C_E, GRF_GPIO3D_E},	//Bank 3
+		{GRF_GPIO4A_E, GRF_GPIO4B_E, GRF_GPIO4C_E, GRF_GPIO4D_E},	//Bank 4
+		{          -1, GRF_GPIO5B_E, GRF_GPIO5C_E,           -1},	//Bank 5
+		{GRF_GPIO6A_E, GRF_GPIO6B_E, GRF_GPIO6C_E,           -1},	//Bank 6
+		{GRF_GPIO7A_E, GRF_GPIO7B_E, GRF_GPIO7C_E,           -1},	//Bank 7
+		{GRF_GPIO8A_E, GRF_GPIO8B_E,           -1,           -1}	//Bank 8
+	} ;
+	return GRF_DRV_TABLE[bank][(int)(pin / 8)];
+}
+
 int tinker_board_setup(int rev)
 {
 	int i;
@@ -1198,6 +1215,40 @@ void asus_set_pinAlt(int pin, int alt)
 			break;
 	}
 	gpio_clk_recovery(pin, bank_clk_en);
+}
+
+
+//drv_type={0:2mA, 1:4mA, 2:8mA, 3:12mA}
+void asus_set_GpioDriveStrength(int gpio, int drv_type)
+{
+	int bank, bank_pin;
+	int GRF_GPIO_E;
+	int write_bit;
+	if(!gpio_is_valid(gpio))
+		return;
+	bank = gpioToBank(gpio);
+	bank_pin = gpioToBankPin(gpio);
+	GRF_GPIO_E = GET_GRF_DRV_OFFSET(bank, bank_pin);
+	if(GRF_GPIO_E == -1)
+		return;
+	write_bit = (bank_pin % 8) << 1;
+	*(grf+GRF_GPIO_E/4) = ((*(grf+GRF_GPIO_E/4) | (0x3 << (16 + write_bit))) & ~(0x3 << write_bit)) | (drv_type & 0x3);
+}
+
+int asus_get_GpioDriveStrength(int gpio)
+{
+	int bank, bank_pin;
+	int GRF_GPIO_E;
+	int write_bit;
+	if(!gpio_is_valid(gpio))
+		return -1;
+	bank = gpioToBank(gpio);
+	bank_pin = gpioToBankPin(gpio);
+	GRF_GPIO_E = GET_GRF_DRV_OFFSET(bank, bank_pin);
+	if(GRF_GPIO_E == -1)
+		return -1;
+	write_bit = (bank_pin % 8) << 1;
+	return (*(grf+GRF_GPIO_E/4) >> write_bit) & 0x3;
 }
 
 void asus_cleanup(void)
