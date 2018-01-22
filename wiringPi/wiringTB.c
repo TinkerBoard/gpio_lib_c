@@ -261,34 +261,35 @@ int gpio_is_valid(int gpio)
 {
 	switch (gpio)
 	{
-		case 17:
-		case 160:
-		case 161:
-		case 162:
-		case 163:
-		case 164:
-		case 165:
-		case 166:
-		case 167:
-		case 168:
-		case 171:
-		case 184:
-		case 185:
-		case 187:
-		case 188:
-		case 223:
-		case 224:
-		case 233:
-		case 234:
-		case 238:
-		case 239:
-		case 251:
-		case 252:
-		case 253:
-		case 254:
-		case 255:
-		case 256:
-		case 257:
+		case GPIO0_C1:
+		case GPIO5_B0:
+		case GPIO5_B1:
+		case GPIO5_B2:
+		case GPIO5_B3:
+		case GPIO5_B4:
+		case GPIO5_B5:
+		case GPIO5_B6:
+		case GPIO5_B7:
+		case GPIO5_C0:
+		case GPIO5_C3:
+		case GPIO6_A0:
+		case GPIO6_A1:
+		case GPIO6_A3:
+		case GPIO6_A4:
+		case GPIO7_A7:
+		case GPIO7_B0:
+		case GPIO7_C1:
+		case GPIO7_C2:
+		case GPIO7_C6:
+		case GPIO7_C7:
+		case GPIO8_A3:
+		case GPIO8_A4:
+		case GPIO8_A5:
+		case GPIO8_A6:
+		case GPIO8_A7:
+		case GPIO8_B0:
+		case GPIO8_B1:
+		case PWM0:
 			return 1;
 		default:
 			return 0;
@@ -404,6 +405,17 @@ int asus_get_pin_mode(int pin)
 			break;
 
 		//GPIO7A7
+		case PWM0:	//GPIO7A0
+			value = ((*(grf+GRF_GPIO7A_IOMUX/4))>>((pin%8)*2)) & 0x00000003; 
+			switch(value)
+			{
+				case 0: func=GPIO;		break;
+				case 1: func=PWM;		break;
+				case 2: func=VOP0_PWM;	break;
+				case 3: func=VOP1_PWM;	break;
+				default: func=-1;		break;
+			}
+			break;
 		case 223 : 
 			value = ((*(grf+GRF_GPIO7A_IOMUX/4))>>((pin%8)*2)) & 0x00000003; 
 			switch(value)
@@ -806,6 +818,10 @@ int asus_get_pwm_value(int pin)
 	int PWM_DUTY_OFFSET = -1;
 	switch (pin)
 	{
+		case PWM0:
+			PWM_PERIOD_OFFSET=RK3288_PWM0_PERIOD;
+			PWM_DUTY_OFFSET=RK3288_PWM0_DUTY;
+			break;
 		case PWM2:
 			PWM_PERIOD_OFFSET=RK3288_PWM2_PERIOD;
 			PWM_DUTY_OFFSET=RK3288_PWM2_DUTY;
@@ -836,6 +852,10 @@ void asus_set_pwmNRange(int pin, unsigned int range)
 	int PWM_PERIOD_OFFSET = -1;
 	switch (pin)
 	{
+		case PWM0:
+			PWM_CTRL_OFFSET=RK3288_PWM0_CTR;
+			PWM_PERIOD_OFFSET=RK3288_PWM0_PERIOD;
+			break;
 		case PWM2:
 			PWM_CTRL_OFFSET=RK3288_PWM2_CTR;
 			PWM_PERIOD_OFFSET=RK3288_PWM2_PERIOD;
@@ -860,6 +880,7 @@ void asus_set_pwmNRange(int pin, unsigned int range)
 
 void asus_set_pwmRange(unsigned int range)
 {
+	asus_set_pwmNRange(PWM0, range);
 	asus_set_pwmNRange(PWM2, range);
 	asus_set_pwmNRange(PWM3, range);
 }
@@ -869,6 +890,9 @@ void asus_set_pwmNClock(int pin, int divisor)
 	int PWM_CTRL_OFFSET = -1;
 	switch (pin)
 	{
+		case PWM0:
+			PWM_CTRL_OFFSET=RK3288_PWM0_CTR;
+			break;
 		case PWM2:
 			PWM_CTRL_OFFSET=RK3288_PWM2_CTR;
 			break;
@@ -893,6 +917,7 @@ void asus_set_pwmNClock(int pin, int divisor)
 
 void asus_set_pwmClock(int divisor)
 {
+	asus_set_pwmNClock(PWM0, divisor);
 	asus_set_pwmNClock(PWM2, divisor);
 	asus_set_pwmNClock(PWM3, divisor);
 }
@@ -906,6 +931,11 @@ void asus_pwm_write(int pin, int value)
 	int PWM_DUTY_OFFSET = -1;
 	switch (pin)
 	{
+		case PWM0:
+			PWM_CTRL_OFFSET=RK3288_PWM0_CTR;
+			PWM_PERIOD_OFFSET=RK3288_PWM0_PERIOD;
+			PWM_DUTY_OFFSET=RK3288_PWM0_DUTY;
+			break;
 		case PWM2:
 			PWM_CTRL_OFFSET=RK3288_PWM2_CTR;
 			PWM_PERIOD_OFFSET=RK3288_PWM2_PERIOD;
@@ -948,6 +978,7 @@ void asus_pwmToneWrite(int pin, int freq)
 	int divi, pwm_clock, range;
 	switch (pin)
 	{
+		case PWM0:divi=((*(pwm+RK3288_PWM0_CTR/4) >> 16) & 0xff) << 1; break;
 		case PWM2:divi=((*(pwm+RK3288_PWM2_CTR/4) >> 16) & 0xff) << 1; break;
 		case PWM3:divi=((*(pwm+RK3288_PWM3_CTR/4) >> 16) & 0xff) << 1; break;
 		default:divi=-1;break;
@@ -1026,6 +1057,7 @@ int asus_get_pinAlt(int pin)
 			alt = ((*(grf+GRF_GPIO6A_IOMUX/4))>>((pin%8)*2)) & 0x00000001;
 			break;
 		//GPIO7A7
+		case PWM0: 
 		case 223 : 
 			alt = ((*(grf+GRF_GPIO7A_IOMUX/4))>>((pin%8)*2)) & 0x00000003;
 			break;
