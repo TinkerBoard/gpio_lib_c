@@ -12,12 +12,16 @@ void asus_set_pin_mode(int pin, int mode);
 void asus_digitalWrite(int pin, int value);
 int asus_digitalRead(int pin);
 void asus_pullUpDnControl (int pin, int pud);
+void asus_set_pwmNRange(int pin, unsigned int range);
 void asus_set_pwmRange(unsigned int range);
+void asus_set_pwmNClock(int pin, int divisor);
 void asus_set_pwmClock(int divisor);
 void asus_pwm_write(int pin, int value);
 void asus_pwmToneWrite(int pin, int freq);
 void asus_set_gpioClockFreq(int pin, int freq);
 int asus_get_pinAlt(int pin);
 void asus_set_pinAlt(int pin, int alt);
+void asus_set_GpioDriveStrength(int gpio, int drv_type);
+int asus_get_GpioDriveStrength(int gpio);
 void asus_cleanup(void);
 #endif
