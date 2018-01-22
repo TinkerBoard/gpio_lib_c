@@ -185,6 +185,11 @@ extern void pwmWrite            (int pin, int value) ;
 extern int  analogRead          (int pin) ;
 extern void analogWrite         (int pin, int value) ;
 
+// On-Board TinkerBoard hardware specific stuff
+extern int  getPinMode          (int pin) ;
+extern void setPwmRange			(int pin, unsigned int range) ;
+extern void setPwmFrequency		(int pin, int divisor) ;
+
 // PiFace specifics 
 //	(Deprecated)
 
@@ -199,7 +204,6 @@ extern int  wpiPinToGpio        (int wpiPin) ;
 extern int  physPinToGpio       (int physPin) ;
 extern void setPadDrive         (int group, int value) ;
 extern int  getAlt              (int pin) ;
-extern int  getPinMode          (int pin) ;
 extern void pwmToneWrite        (int pin, int freq) ;
 extern void digitalWriteByte    (int value) ;
 extern void pwmSetMode          (int mode) ;

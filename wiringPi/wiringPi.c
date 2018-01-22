@@ -1084,7 +1084,7 @@ void pwmSetRange (unsigned int range)
 	if ((wiringPiMode == WPI_MODE_PINS) || (wiringPiMode == WPI_MODE_PHYS) || (wiringPiMode == WPI_MODE_GPIO))
 	{
 		#ifdef TINKER_BOARD
-		asus_set_pwmRange(range);
+		asus_set_pwmRange(range); delayMicroseconds (10) ;
 		#else
 		if (RASPBERRY_PI_PERI_BASE == 0)	// Ignore for now
 			return ;
@@ -1143,6 +1143,52 @@ void pwmSetClock (int divisor)
 	}
 }
 
+
+/*
+ * setPwmRange:
+ *	Set the PWM range register. 
+ *********************************************************************************
+ */
+ 
+void setPwmRange (int pin, unsigned int range)
+{
+	#ifdef TINKER_BOARD
+	if ((pin & PI_GPIO_MASK) == 0)          // On-Board Pin
+    {
+		if (wiringPiMode == WPI_MODE_PINS)
+			pin = pinToGpio [pin] ;
+		else if (wiringPiMode == WPI_MODE_PHYS)
+			pin = physToGpio [pin] ;
+		else if (wiringPiMode != WPI_MODE_GPIO)
+			return ;
+		asus_set_pwmNRange(pin, range); delayMicroseconds (10) ;
+    }
+	#endif
+}
+
+
+/*
+ * setPwmFrequency:
+ *	Set/Change the PWM clock. 
+ *********************************************************************************
+ */
+
+ void setPwmFrequency (int pin, int divisor)
+{
+	#ifdef TINKER_BOARD
+	divisor &= 0xff ;
+	if ((pin & PI_GPIO_MASK) == 0)          // On-Board Pin
+    {
+		if (wiringPiMode == WPI_MODE_PINS)
+			pin = pinToGpio [pin] ;
+		else if (wiringPiMode == WPI_MODE_PHYS)
+			pin = physToGpio [pin] ;
+		else if (wiringPiMode != WPI_MODE_GPIO)
+			return ;
+		asus_set_pwmNClock(pin, range);
+    }
+	#endif
+}
 
 /*
  * gpioClockSet:
