@@ -455,7 +455,7 @@ int asus_get_pin_mode(int pin)
 		//GPIO7C
 		case 233 : 
 		case 234 : 
-			value = ((*(grf+GRF_GPIO7CL_IOMUX/4))>>((pin%8)*2)) & 0x00000001;
+			value = ((*(grf+GRF_GPIO7CL_IOMUX/4))>>((pin%8)*4)) & 0x00000001;
 			switch(value)
 			{
 				case 0: func=GPIO;		break;
@@ -1073,7 +1073,7 @@ int asus_get_pinAlt(int pin)
 		//GPIO7C
 		case 233 : 
 		case 234 : 
-			alt = ((*(grf+GRF_GPIO7CL_IOMUX/4))>>((pin%8)*2)) & 0x00000001;
+			alt = ((*(grf+GRF_GPIO7CL_IOMUX/4))>>((pin%8)*4)) & 0x00000001;
 			break;
 		case 238 : 
 			alt = ((*(grf+GRF_GPIO7CH_IOMUX/4))>>(((pin-4)%8)*4)) & 0x00000003;

@@ -1185,7 +1185,7 @@ void setPwmRange (int pin, unsigned int range)
 			pin = physToGpio [pin] ;
 		else if (wiringPiMode != WPI_MODE_GPIO)
 			return ;
-		asus_set_pwmNClock(pin, range);
+		asus_set_pwmNClock(pin, divisor);
     }
 	#endif
 }
