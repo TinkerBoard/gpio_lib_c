@@ -1145,12 +1145,12 @@ void pwmSetClock (int divisor)
 
 
 /*
- * setPwmRange:
- *	Set the PWM range register. 
+ * setPwmPeriod:
+ *	Set the PWM Period register. 
  *********************************************************************************
  */
  
-void setPwmRange (int pin, unsigned int range)
+void setPwmPeriod (int pin, unsigned int period)
 {
 	#ifdef TINKER_BOARD
 	if ((pin & PI_GPIO_MASK) == 0)          // On-Board Pin
@@ -1161,7 +1161,7 @@ void setPwmRange (int pin, unsigned int range)
 			pin = physToGpio [pin] ;
 		else if (wiringPiMode != WPI_MODE_GPIO)
 			return ;
-		asus_set_pwmNRange(pin, range); delayMicroseconds (10) ;
+		asus_set_pwmPeriod(pin, period); delayMicroseconds (10) ;
     }
 	#endif
 }
@@ -1185,7 +1185,7 @@ void setPwmRange (int pin, unsigned int range)
 			pin = physToGpio [pin] ;
 		else if (wiringPiMode != WPI_MODE_GPIO)
 			return ;
-		asus_set_pwmNClock(pin, divisor);
+		asus_set_pwmFrequency(pin, divisor);
     }
 	#endif
 }

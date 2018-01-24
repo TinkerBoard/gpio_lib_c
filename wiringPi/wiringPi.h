@@ -187,7 +187,7 @@ extern void analogWrite         (int pin, int value) ;
 
 // On-Board TinkerBoard hardware specific stuff
 extern int  getPinMode          (int pin) ;
-extern void setPwmRange			(int pin, unsigned int range) ;
+extern void setPwmPeriod		(int pin, unsigned int period) ;
 extern void setPwmFrequency		(int pin, int divisor) ;
 
 // PiFace specifics 

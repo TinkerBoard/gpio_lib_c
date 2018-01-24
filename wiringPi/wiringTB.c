@@ -845,7 +845,7 @@ int asus_get_pwm_value(int pin)
 	}
 }
 
-void asus_set_pwmNRange(int pin, unsigned int range)
+void asus_set_pwmPeriod(int pin, unsigned int period)
 {
 	int pwm_value;
 	int PWM_CTRL_OFFSET = -1;
@@ -871,7 +871,7 @@ void asus_set_pwmNRange(int pin, unsigned int range)
 	{
 		pwm_value = asus_get_pwm_value(pin);
 		*(pwm+PWM_CTRL_OFFSET/4) &= ~(1<<0);	//Disable PWM
-		*(pwm+PWM_PERIOD_OFFSET/4) = range;		//Set period PWM
+		*(pwm+PWM_PERIOD_OFFSET/4) = period;	//Set period PWM
 		*(pwm+PWM_CTRL_OFFSET/4) |= (1<<0); 	//Enable PWM
 		if(pwm_value != -1)
 			asus_pwm_write(pin, pwm_value);
@@ -880,12 +880,12 @@ void asus_set_pwmNRange(int pin, unsigned int range)
 
 void asus_set_pwmRange(unsigned int range)
 {
-	asus_set_pwmNRange(PWM0, range);
-	asus_set_pwmNRange(PWM2, range);
-	asus_set_pwmNRange(PWM3, range);
+	asus_set_pwmPeriod(PWM0, range);
+	asus_set_pwmPeriod(PWM2, range);
+	asus_set_pwmPeriod(PWM3, range);
 }
 
-void asus_set_pwmNClock(int pin, int divisor)
+void asus_set_pwmFrequency(int pin, int divisor)
 {
 	int PWM_CTRL_OFFSET = -1;
 	switch (pin)
@@ -917,9 +917,9 @@ void asus_set_pwmNClock(int pin, int divisor)
 
 void asus_set_pwmClock(int divisor)
 {
-	asus_set_pwmNClock(PWM0, divisor);
-	asus_set_pwmNClock(PWM2, divisor);
-	asus_set_pwmNClock(PWM3, divisor);
+	asus_set_pwmFrequency(PWM0, divisor);
+	asus_set_pwmFrequency(PWM2, divisor);
+	asus_set_pwmFrequency(PWM3, divisor);
 }
 
 void asus_pwm_write(int pin, int value)
