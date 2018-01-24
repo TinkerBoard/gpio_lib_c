@@ -991,7 +991,7 @@ void asus_pwmToneWrite(int pin, int freq)
 	{
 		pwm_clock = 74250000 / divi;		//74.25Mhz / divi
 		range = pwm_clock / freq ;
-		asus_set_pwmRange (range) ;
+		asus_set_pwmPeriod (pin, range) ;
 		asus_pwm_write (pin, range / 2) ;
 	}
 }
