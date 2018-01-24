@@ -1173,7 +1173,7 @@ void setPwmPeriod (int pin, unsigned int period)
  *********************************************************************************
  */
 
- void setPwmFrequency (int pin, int divisor)
+void setPwmFrequency (int pin, int divisor)
 {
 	#ifdef TINKER_BOARD
 	divisor &= 0xff ;
@@ -1188,6 +1188,51 @@ void setPwmPeriod (int pin, unsigned int period)
 		asus_set_pwmFrequency(pin, divisor);
     }
 	#endif
+}
+
+/*
+ * setGpioDrive:
+ *	Set the drive strength on a given port. 
+ *********************************************************************************
+ */
+
+void setGpioDrive (int pin, int drv_type)
+{
+	#ifdef TINKER_BOARD
+	if ((pin & PI_GPIO_MASK) == 0)          // On-Board Pin
+    {
+		if (wiringPiMode == WPI_MODE_PINS)
+			pin = pinToGpio [pin] ;
+		else if (wiringPiMode == WPI_MODE_PHYS)
+			pin = physToGpio [pin] ;
+		else if (wiringPiMode != WPI_MODE_GPIO)
+			return ;
+		asus_set_GpioDriveStrength(pin, drv_type);
+    }
+	#endif
+}
+
+/*
+ * getGpioDrive:
+ *	Returns the drive strength for a given port.
+ *********************************************************************************
+ */
+
+int getGpioDrive (int pin)
+{
+	#ifdef TINKER_BOARD
+	if ((pin & PI_GPIO_MASK) == 0)          // On-Board Pin
+    {
+		if (wiringPiMode == WPI_MODE_PINS)
+			pin = pinToGpio [pin] ;
+		else if (wiringPiMode == WPI_MODE_PHYS)
+			pin = physToGpio [pin] ;
+		else if (wiringPiMode != WPI_MODE_GPIO)
+			return -1;
+		return asus_get_GpioDriveStrength(pin);
+    }
+	#endif
+	return -1;
 }
 
 /*

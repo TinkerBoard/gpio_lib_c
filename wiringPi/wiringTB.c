@@ -1251,15 +1251,15 @@ void asus_set_pinAlt(int pin, int alt)
 
 
 //drv_type={0:2mA, 1:4mA, 2:8mA, 3:12mA}
-void asus_set_GpioDriveStrength(int gpio, int drv_type)
+void asus_set_GpioDriveStrength(int pin, int drv_type)
 {
 	int bank, bank_pin;
 	int GRF_GPIO_E;
 	int write_bit;
-	if(!gpio_is_valid(gpio))
+	if(!gpio_is_valid(pin))
 		return;
-	bank = gpioToBank(gpio);
-	bank_pin = gpioToBankPin(gpio);
+	bank = gpioToBank(pin);
+	bank_pin = gpioToBankPin(pin);
 	GRF_GPIO_E = GET_GRF_DRV_OFFSET(bank, bank_pin);
 	if(GRF_GPIO_E == -1)
 		return;
@@ -1267,15 +1267,15 @@ void asus_set_GpioDriveStrength(int gpio, int drv_type)
 	*(grf+GRF_GPIO_E/4) = ((*(grf+GRF_GPIO_E/4) | (0x3 << (16 + write_bit))) & ~(0x3 << write_bit)) | (drv_type & 0x3);
 }
 
-int asus_get_GpioDriveStrength(int gpio)
+int asus_get_GpioDriveStrength(int pin)
 {
 	int bank, bank_pin;
 	int GRF_GPIO_E;
 	int write_bit;
-	if(!gpio_is_valid(gpio))
+	if(!gpio_is_valid(pin))
 		return -1;
-	bank = gpioToBank(gpio);
-	bank_pin = gpioToBankPin(gpio);
+	bank = gpioToBank(pin);
+	bank_pin = gpioToBankPin(pin);
 	GRF_GPIO_E = GET_GRF_DRV_OFFSET(bank, bank_pin);
 	if(GRF_GPIO_E == -1)
 		return -1;

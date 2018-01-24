@@ -21,7 +21,7 @@ void asus_pwmToneWrite(int pin, int freq);
 void asus_set_gpioClockFreq(int pin, int freq);
 int asus_get_pinAlt(int pin);
 void asus_set_pinAlt(int pin, int alt);
-void asus_set_GpioDriveStrength(int gpio, int drv_type);
-int asus_get_GpioDriveStrength(int gpio);
+void asus_set_GpioDriveStrength(int pin, int drv_type);
+int asus_get_GpioDriveStrength(int pin);
 void asus_cleanup(void);
 #endif

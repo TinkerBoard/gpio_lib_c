@@ -58,6 +58,12 @@
 #define	PUD_DOWN		 1
 #define	PUD_UP			 2
 
+// Drive Strength 2mA, 4mA, 8mA, 12mA
+#define	E_2MA			0
+#define	E_4MA		 	1
+#define	E_8MA			2
+#define	E_12MA			3
+
 // PWM
 
 #define	PWM_MODE_MS		0
@@ -189,6 +195,8 @@ extern void analogWrite         (int pin, int value) ;
 extern int  getPinMode          (int pin) ;
 extern void setPwmPeriod		(int pin, unsigned int period) ;
 extern void setPwmFrequency		(int pin, int divisor) ;
+extern void setGpioDrive		(int pin, int drv_type) ;
+extern int 	getGpioDrive		(int pin) ;
 
 // PiFace specifics 
 //	(Deprecated)
