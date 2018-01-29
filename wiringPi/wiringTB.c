@@ -107,9 +107,26 @@ int* asus_get_pinToGpio(int rev)
 	return pinToGpio_AP;
 }
 
-int GET_GRF_DRV_OFFSET(int bank, int pin)
+int GET_PULL_OFFSET(int bank, int pin)
 {
-	int GRF_DRV_TABLE [9][4] =
+	int PULL_TABLE [9][4] =
+	{
+		{		   -1,           -1, PMU_GPIO0C_P,           -1},	//Bank 0
+		{		   -1,           -1,           -1, GRF_GPIO1D_P},	//Bank 1
+		{GRF_GPIO2A_P, GRF_GPIO2B_P, GRF_GPIO2C_P,           -1},	//Bank 2
+		{GRF_GPIO3A_P, GRF_GPIO3B_P, GRF_GPIO3C_P, GRF_GPIO3D_P},	//Bank 3
+		{GRF_GPIO4A_P, GRF_GPIO4B_P, GRF_GPIO4C_P, GRF_GPIO4D_P},	//Bank 4
+		{          -1, GRF_GPIO5B_P, GRF_GPIO5C_P,           -1},	//Bank 5
+		{GRF_GPIO6A_P, GRF_GPIO6B_P, GRF_GPIO6C_P,           -1},	//Bank 6
+		{GRF_GPIO7A_P, GRF_GPIO7B_P, GRF_GPIO7C_P,           -1},	//Bank 7
+		{GRF_GPIO8A_P, GRF_GPIO8B_P,           -1,           -1}	//Bank 8
+	} ;
+	return PULL_TABLE[bank][(int)(pin / 8)];
+}
+
+int GET_DRV_OFFSET(int bank, int pin)
+{
+	int DRV_TABLE [9][4] =
 	{
 		{		   -1,           -1, PMU_GPIO0C_E,           -1},	//Bank 0
 		{		   -1,           -1,           -1, GRF_GPIO1D_E},	//Bank 1
@@ -121,7 +138,7 @@ int GET_GRF_DRV_OFFSET(int bank, int pin)
 		{GRF_GPIO7A_E, GRF_GPIO7B_E, GRF_GPIO7C_E,           -1},	//Bank 7
 		{GRF_GPIO8A_E, GRF_GPIO8B_E,           -1,           -1}	//Bank 8
 	} ;
-	return GRF_DRV_TABLE[bank][(int)(pin / 8)];
+	return DRV_TABLE[bank][(int)(pin / 8)];
 }
 
 int tinker_board_setup(int rev)
@@ -290,6 +307,21 @@ int gpio_is_valid(int gpio)
 		case GPIO8_B0:
 		case GPIO8_B1:
 		case PWM0:
+			return 1;
+		default:
+			return 0;
+	}
+}
+
+int pud_2_tb_format(int pud)
+{
+	switch(pud)
+	{
+		case 0:
+			return 0;
+		case 1:
+			return 2;
+		case 2:
 			return 1;
 		default:
 			return 0;
@@ -719,95 +751,32 @@ int asus_digitalRead(int pin)
 
 void asus_pullUpDnControl (int pin, int pud)
 {
-	static int bit0,bit1;
-	//printf("pullupdn %d\n",pud);//pud 2:up 1:down 0:off
-	if(pud == 2)
+	int bank, bank_pin;
+	int GPIO_P_offset;
+	int write_bit;
+	if(!gpio_is_valid(pin))
 	{
-		bit0 = 1;
-		bit1 = 0;
+		printf("wrong gpio\n");
+		return;
 	}
-	else if(pud == 1)
+	bank = gpioToBank(pin);
+	bank_pin = gpioToBankPin(pin);
+	GPIO_P_offset = GET_PULL_OFFSET(bank, bank_pin);
+	if(GPIO_P_offset == -1)
 	{
-		bit0 = 0;
-		bit1 = 1;
+		printf("wrong offset\n");
+		return;
+	}
+	write_bit = (bank_pin % 8) << 1;
+	pud = pud_2_tb_format(pud);
+	if(bank == 0)
+	{
+		*(pmu+GPIO_P_offset/4) = (*(pmu+GPIO_P_offset/4) & ~(0x3 << write_bit)) | (pud << write_bit);	//without write_en
 	}
 	else
 	{
-		bit0 = 0;
-		bit1 = 0;
+		*(grf+GPIO_P_offset/4) = (0x3 << (16 + write_bit)) | (pud << write_bit);						//with write_en
 	}
-	
-	switch(pin)
-	{
-		//GPIO0
-		case 17 : 
-			*(pmu+PMU_GPIO0C_P/4) = ((*(pmu+PMU_GPIO0C_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));
-			break;
-
-		//GPIO5B
-		case 160 : 
-		case 161 :
-		case 162 :
-		case 163 :			
-		case 164 :
-		case 165 :
-		case 166 :
-		case 167 :
-			*(grf+GRF_GPIO5B_P/4) = ((*(grf+GRF_GPIO5B_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));
-			break;
-		
-		//GPIO5C
-		case 168 : 
-		case 169 :
-		case 170 :
-		case 171 :
-			*(grf+GRF_GPIO5C_P/4) = ((*(grf+GRF_GPIO5C_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));
-			break;
-
-		//GPIO6A
-		case 184 : 
-		case 185 :
-		case 187 :
-		case 188 :
-			*(grf+GRF_GPIO6A_P/4) = ((*(grf+GRF_GPIO6A_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));
-			break;
-
-		//GPIO7A7
-		case 223 : 
-			*(grf+GRF_GPIO7A_P/4) = ((*(grf+GRF_GPIO7A_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2)); 
-			break;
-
-		//GPIO7B
-		case 224 : 
-		case 225 : 
-		case 226 : 
-			*(grf+GRF_GPIO7B_P/4) = ((*(grf+GRF_GPIO7B_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2)); 
-			break;
-		//GPIO7C
-		case 233 : 
-		case 234 : 			
-		case 238 : 			
-		case 239 : 
-			*(grf+GRF_GPIO7C_P/4) = ((*(grf+GRF_GPIO7C_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2));  
-			break;
-
-		//GPIO8A
-		case 251 : 
-		case 254 :
-		case 255 :			
-		case 252 : 
-		case 253 :
-			*(grf+GRF_GPIO8A_P/4) = ((*(grf+GRF_GPIO8A_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2)); 
-			break;
-		//GPIO8B
-		case 256 : 
-		case 257 :
-			*(grf+GRF_GPIO8B_P/4) = ((*(grf+GRF_GPIO8B_P/4) | (0x03<<((pin%8)*2+16))) & (~(0x03<<((pin%8)*2)))) | (bit1<<((pin%8)*2+1)) | (bit0<<((pin%8)*2)); 
-			break;
-		default:
-			printf("wrong gpio\n");
-			break;
-	}	//switch(pin)
 }
 
 int asus_get_pwm_value(int pin)
@@ -1257,20 +1226,27 @@ void asus_set_GpioDriveStrength(int pin, int drv_type)
 	int GPIO_E_offset;
 	int write_bit;
 	if(!gpio_is_valid(pin))
+	{
+		printf("wrong gpio\n");
 		return;
+	}
 	bank = gpioToBank(pin);
 	bank_pin = gpioToBankPin(pin);
-	GPIO_E_offset = GET_GRF_DRV_OFFSET(bank, bank_pin);
+	GPIO_E_offset = GET_DRV_OFFSET(bank, bank_pin);
 	if(GPIO_E_offset == -1)
+	{
+		printf("wrong gpio\n");
 		return;
+	}
 	write_bit = (bank_pin % 8) << 1;
+	drv_type &= 0x3;
 	if(bank == 0)
 	{
-		*(pmu+GPIO_E_offset/4) = (*(pmu+GPIO_E_offset/4) & ~(0x3 << write_bit)) | ((drv_type & 0x3) << write_bit);	//without write_en
+		*(pmu+GPIO_E_offset/4) = (*(pmu+GPIO_E_offset/4) & ~(0x3 << write_bit)) | (drv_type << write_bit);	//without write_en
 	}
 	else
 	{
-		*(grf+GPIO_E_offset/4) = (0x3 << (16 + write_bit)) | ((drv_type & 0x3) << write_bit);						//with write_en
+		*(grf+GPIO_E_offset/4) = (0x3 << (16 + write_bit)) | (drv_type << write_bit);						//with write_en
 	}
 }
 
@@ -1281,13 +1257,19 @@ int asus_get_GpioDriveStrength(int pin)
 	int write_bit;
 	volatile unsigned *reg;
 	if(!gpio_is_valid(pin))
+	{
+		printf("wrong gpio\n");
 		return -1;
+	}
 	bank = gpioToBank(pin);
 	bank_pin = gpioToBankPin(pin);
 	reg = (bank == 0) ? pmu : grf;
-	GPIO_E_offset = GET_GRF_DRV_OFFSET(bank, bank_pin);
+	GPIO_E_offset = GET_DRV_OFFSET(bank, bank_pin);
 	if(GPIO_E_offset == -1)
+	{
+		printf("wrong offset\n");
 		return -1;
+	}
 	write_bit = (bank_pin % 8) << 1;
 	return (*(reg+GPIO_E_offset/4) >> write_bit) & 0x3;
 }

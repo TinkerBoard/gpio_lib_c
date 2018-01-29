@@ -66,8 +66,7 @@
 
 #define RK3288_PMU		0xff730000
 #define PMU_GPIO0C_IOMUX	0x008c
-#define PMU_GPIO0C_P		0x006c
-#define PMU_GPIO0C_E		0x0078
+
 
 #define RK3288_GPIO(x)		(GPIO0_BASE+x*GPIO_LENGTH+(x>0)*GPIO_CHANNEL)
 #define GPIO_LENGTH 		0x00010000
@@ -88,6 +87,20 @@
 #define GRF_GPIO8A_IOMUX	0x0080
 #define GRF_GPIO8B_IOMUX	0x0084
 
+/* Pull up / down / Z */
+#define PMU_GPIO0C_P	0x006c
+#define GRF_GPIO1D_P	0x014c
+#define GRF_GPIO2A_P	0x0150
+#define GRF_GPIO2B_P	0x0154
+#define GRF_GPIO2C_P	0x0158
+#define GRF_GPIO3A_P	0x0160
+#define GRF_GPIO3B_P	0x0164
+#define GRF_GPIO3C_P	0x0168
+#define GRF_GPIO3D_P	0x016c
+#define GRF_GPIO4A_P	0x0170
+#define GRF_GPIO4B_P	0x0174
+#define GRF_GPIO4C_P	0x0178
+#define GRF_GPIO4D_P	0x017c
 #define GRF_GPIO5B_P	0x0184
 #define GRF_GPIO5C_P	0x0188
 #define GRF_GPIO6A_P	0x0190
@@ -100,6 +113,7 @@
 #define GRF_GPIO8B_P	0x01b4
 
 /* Drive Strength */
+#define PMU_GPIO0C_E	0x0078
 #define GRF_GPIO1D_E	0x01cc
 #define GRF_GPIO2A_E	0x01d0
 #define GRF_GPIO2B_E	0x01d4
