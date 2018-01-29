@@ -111,7 +111,7 @@ int GET_GRF_DRV_OFFSET(int bank, int pin)
 {
 	int GRF_DRV_TABLE [9][4] =
 	{
-		{		   -1,           -1,           -1,           -1},	//Bank 0
+		{		   -1,           -1, PMU_GPIO0C_E,           -1},	//Bank 0
 		{		   -1,           -1,           -1, GRF_GPIO1D_E},	//Bank 1
 		{GRF_GPIO2A_E, GRF_GPIO2B_E, GRF_GPIO2C_E,           -1},	//Bank 2
 		{GRF_GPIO3A_E, GRF_GPIO3B_E, GRF_GPIO3C_E, GRF_GPIO3D_E},	//Bank 3
@@ -1254,33 +1254,42 @@ void asus_set_pinAlt(int pin, int alt)
 void asus_set_GpioDriveStrength(int pin, int drv_type)
 {
 	int bank, bank_pin;
-	int GRF_GPIO_E;
+	int GPIO_E_offset;
 	int write_bit;
 	if(!gpio_is_valid(pin))
 		return;
 	bank = gpioToBank(pin);
 	bank_pin = gpioToBankPin(pin);
-	GRF_GPIO_E = GET_GRF_DRV_OFFSET(bank, bank_pin);
-	if(GRF_GPIO_E == -1)
+	GPIO_E_offset = GET_GRF_DRV_OFFSET(bank, bank_pin);
+	if(GPIO_E_offset == -1)
 		return;
 	write_bit = (bank_pin % 8) << 1;
-	*(grf+GRF_GPIO_E/4) = ((*(grf+GRF_GPIO_E/4) | (0x3 << (16 + write_bit))) & ~(0x3 << write_bit)) | (drv_type & 0x3);
+	if(bank == 0)
+	{
+		*(pmu+GPIO_E_offset/4) = (*(pmu+GPIO_E_offset/4) & ~(0x3 << write_bit)) | ((drv_type & 0x3) << write_bit);	//without write_en
+	}
+	else
+	{
+		*(grf+GPIO_E_offset/4) = (0x3 << (16 + write_bit)) | ((drv_type & 0x3) << write_bit);						//with write_en
+	}
 }
 
 int asus_get_GpioDriveStrength(int pin)
 {
 	int bank, bank_pin;
-	int GRF_GPIO_E;
+	int GPIO_E_offset;
 	int write_bit;
+	volatile unsigned *reg;
 	if(!gpio_is_valid(pin))
 		return -1;
 	bank = gpioToBank(pin);
 	bank_pin = gpioToBankPin(pin);
-	GRF_GPIO_E = GET_GRF_DRV_OFFSET(bank, bank_pin);
-	if(GRF_GPIO_E == -1)
+	reg = (bank == 0) ? pmu : grf;
+	GPIO_E_offset = GET_GRF_DRV_OFFSET(bank, bank_pin);
+	if(GPIO_E_offset == -1)
 		return -1;
 	write_bit = (bank_pin % 8) << 1;
-	return (*(grf+GRF_GPIO_E/4) >> write_bit) & 0x3;
+	return (*(reg+GPIO_E_offset/4) >> write_bit) & 0x3;
 }
 
 void asus_cleanup(void)
