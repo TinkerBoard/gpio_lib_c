@@ -51,6 +51,7 @@ static volatile unsigned *pmu;
 static void *cru_map;
 static volatile unsigned *cru;
 
+/* Format Convert*/
 int* asus_get_physToGpio(int rev)
 {
 	static int physToGpio_AP [64] =
@@ -107,6 +108,46 @@ int* asus_get_pinToGpio(int rev)
 	return pinToGpio_AP;
 }
 
+int pud_2_tb_format(int pud)
+{
+	switch(pud)
+	{
+		case 0:
+			return 0b00;
+		case 1:
+			return 0b10;
+		case 2:
+			return 0b01;
+		default:
+			return 0;
+	}
+}
+
+int alt_2_tb_format(int alt)
+{
+	switch(alt)
+	{
+		case FSEL_INPT:
+		case FSEL_OUTP:
+			return 0;
+		case FSEL_ALT0:
+			return 1;
+		case FSEL_ALT1:
+			return 2;
+		case FSEL_ALT2:
+			return 3;
+		case FSEL_ALT3:
+			return 4;
+		case FSEL_ALT4:
+			return 5;
+		case FSEL_ALT5:
+			return 6;
+		default:
+			return -1;
+	}
+}
+
+/* Register Offset Table */
 int GET_PULL_OFFSET(int bank, int pin)
 {
 	int PULL_TABLE [9][4] =
@@ -139,6 +180,23 @@ int GET_DRV_OFFSET(int bank, int pin)
 		{GRF_GPIO8A_E, GRF_GPIO8B_E,           -1,           -1}	//Bank 8
 	} ;
 	return DRV_TABLE[bank][(int)(pin / 8)];
+}
+
+/* common */
+int gpioToBank(int gpio)
+{
+	if(gpio < 24)
+		return 0;
+	else
+		return (int)((gpio - 24) / 32) + 1;
+}
+
+int gpioToBankPin(int gpio)
+{
+	if(gpio < 24)
+		return gpio;
+	else
+		return (gpio - 24) % 32;
 }
 
 int tinker_board_setup(int rev)
@@ -258,21 +316,6 @@ int tinker_board_setup(int rev)
 	close(mem_fd); // No need to keep mem_fdcru open after mmap
 	return 0;
 }
-int gpioToBank(int gpio)
-{
-	if(gpio < 24)
-		return 0;
-	else
-		return (int)((gpio - 24) / 32) + 1;
-}
-
-int gpioToBankPin(int gpio)
-{
-	if(gpio < 24)
-		return gpio;
-	else
-		return (gpio - 24) % 32;
-}
 
 int gpio_is_valid(int gpio)
 {
@@ -307,21 +350,6 @@ int gpio_is_valid(int gpio)
 		case GPIO8_B0:
 		case GPIO8_B1:
 		case PWM0:
-			return 1;
-		default:
-			return 0;
-	}
-}
-
-int pud_2_tb_format(int pud)
-{
-	switch(pud)
-	{
-		case 0:
-			return 0;
-		case 1:
-			return 2;
-		case 2:
 			return 1;
 		default:
 			return 0;
@@ -1179,41 +1207,26 @@ void asus_set_pinAlt(int pin, int alt)
 {
 	int bank_clk_en;
 	int bank, bank_pin;
+	int tb_format_alt;
 	if(!gpio_is_valid(pin))
 		return;
 	bank = gpioToBank(pin);
 	bank_pin = gpioToBankPin(pin);
 	bank_clk_en = gpio_clk_disable(pin);
-	switch(alt)
+	tb_format_alt = alt_2_tb_format(alt);
+	if(tb_format_alt == -1)
 	{
-		case FSEL_INPT:
-			SetGpioMode(pin, 0x00);
-			*(gpio0[bank]+GPIO_SWPORTA_DDR_OFFSET/4) &= ~(1<<bank_pin);
-			break;
-		case FSEL_OUTP:
-			SetGpioMode(pin, 0x00);
-			*(gpio0[bank]+GPIO_SWPORTA_DDR_OFFSET/4) |= (1<<bank_pin);
-			break;
-		case FSEL_ALT0:
-			SetGpioMode(pin, 0x01);
-			break;
-		case FSEL_ALT1:
-			SetGpioMode(pin, 0x02);
-			break;
-		case FSEL_ALT2:
-			SetGpioMode(pin, 0x03);
-			break;
-		case FSEL_ALT3:
-			SetGpioMode(pin, 0x04);
-			break;
-		case FSEL_ALT4:
-			SetGpioMode(pin, 0x05);
-			break;
-		case FSEL_ALT5:
-			SetGpioMode(pin, 0x06);
-			break;
-		default:
-			break;
+		printf("wrong alt\n");
+		return;
+	}
+	SetGpioMode(pin, tb_format_alt);
+	if(alt == FSEL_INPT)
+	{
+		*(gpio0[bank]+GPIO_SWPORTA_DDR_OFFSET/4) &= ~(1<<bank_pin);
+	}
+	else if(alt == FSEL_OUTP)
+	{
+		*(gpio0[bank]+GPIO_SWPORTA_DDR_OFFSET/4) |= (1<<bank_pin);
 	}
 	gpio_clk_recovery(pin, bank_clk_en);
 }
@@ -1235,7 +1248,7 @@ void asus_set_GpioDriveStrength(int pin, int drv_type)
 	GPIO_E_offset = GET_DRV_OFFSET(bank, bank_pin);
 	if(GPIO_E_offset == -1)
 	{
-		printf("wrong gpio\n");
+		printf("wrong offset\n");
 		return;
 	}
 	write_bit = (bank_pin % 8) << 1;
