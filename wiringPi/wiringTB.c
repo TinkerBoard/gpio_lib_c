@@ -129,19 +129,18 @@ int alt_2_tb_format(int alt)
 	{
 		case FSEL_INPT:
 		case FSEL_OUTP:
-			return 0;
 		case FSEL_ALT0:
-			return 1;
+			return 0;
 		case FSEL_ALT1:
-			return 2;
+			return 1;
 		case FSEL_ALT2:
-			return 3;
+			return 2;
 		case FSEL_ALT3:
-			return 4;
+			return 3;
 		case FSEL_ALT4:
-			return 5;
+			return 4;
 		case FSEL_ALT5:
-			return 6;
+			return 5;
 		default:
 			return -1;
 	}
@@ -1212,13 +1211,13 @@ void asus_set_pinAlt(int pin, int alt)
 		return;
 	bank = gpioToBank(pin);
 	bank_pin = gpioToBankPin(pin);
-	bank_clk_en = gpio_clk_disable(pin);
 	tb_format_alt = alt_2_tb_format(alt);
 	if(tb_format_alt == -1)
 	{
 		printf("wrong alt\n");
 		return;
 	}
+	bank_clk_en = gpio_clk_disable(pin);
 	SetGpioMode(pin, tb_format_alt);
 	if(alt == FSEL_INPT)
 	{
