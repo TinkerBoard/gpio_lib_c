@@ -93,7 +93,6 @@
 
 #ifdef TINKER_BOARD
 #define	PI_GPIO_MASK	(0xFFFFFE00)
-#include "wiringTB.h"
 #else
 #define	PI_GPIO_MASK	(0xFFFFFFC0)
 #endif

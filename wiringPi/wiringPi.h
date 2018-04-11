@@ -24,6 +24,19 @@
 #ifndef	__WIRING_PI_H__
 #define	__WIRING_PI_H__
 
+
+#include <wiringTB.h>
+#undef    INPUT
+#undef    OUTPUT
+#undef    PWM_OUTPUT
+#undef    GPIO_CLOCK
+#undef    SOFT_PWM_OUTPUT
+#undef    SOFT_TONE_OUTPUT
+#undef    PWM_TONE_OUTPUT
+#undef    PUD_OFF
+#undef    PUD_DOWN
+#undef    PUD_UP
+
 // Handy defines
 
 

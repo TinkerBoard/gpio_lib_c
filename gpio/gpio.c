@@ -1,11 +1,11 @@
 /*
  * gpio.c:
- *	Swiss-Army-Knife, Set-UID command-line interface to the Raspberry
- *	Pi's GPIO.
- *	Copyright (c) 2012-2015 Gordon Henderson
+ *        Swiss-Army-Knife, Set-UID command-line interface to the Raspberry
+ *        Pi's GPIO.
+ *        Copyright (c) 2012-2015 Gordon Henderson
  ***********************************************************************
  * This file is part of wiringPi:
- *	https://projects.drogon.net/raspberry-pi/wiringpi/
+ *        https://projects.drogon.net/raspberry-pi/wiringpi/
  *
  *    wiringPi is free software: you can redistribute it and/or modify
  *    it under the terms of the GNU Lesser General Public License as published by
@@ -50,12 +50,12 @@ extern void doReadall    (void) ;
 extern void doPins       (void) ;
 
 #ifndef TRUE
-#  define	TRUE	(1==1)
-#  define	FALSE	(1==2)
+#  define        TRUE        (1==1)
+#  define        FALSE        (1==2)
 #endif
 
-#define	PI_USB_POWER_CONTROL	38
-#define	I2CDETECT		"/usr/sbin/i2cdetect"
+#define        PI_USB_POWER_CONTROL        38
+#define        I2CDETECT                "/usr/sbin/i2cdetect"
 
 int wpMode ;
 
@@ -64,27 +64,27 @@ char *usage = "Usage: gpio -v\n"
               "       gpio [-g|-1] [-x extension:params] ...\n"
               "       gpio [-p] <read/write/wb> ...\n"
               "       gpio <read/write/pwm/mode> ...\n"
-	      "       gpio readall/reset\n"
-	      "       gpio unexportall/exports\n"
-	      "       gpio export/edge/unexport ...\n"
-	//      "       gpio wfi <pin> <mode>\n"
-	//    "       gpio drive <group> <value>\n"
-	//      "       gpio pwm-bal/pwm-ms \n"
-	      "       gpio pwmr <range> \n"
-	      "       gpio pwmc <divider> \n"
-	      "       gpio load spi/i2c\n"
-	      "       gpio unload spi/i2c\n"
-	      "       gpio i2cd/i2cdetect\n";
-	//      "       gpio usbp high/low\n"
-	//      "       gpio gbr <channel>\n"
-	  //    "       gpio gbw <channel> <value>" ;	// No trailing newline needed here.
+              "       gpio readall/reset\n"
+              "       gpio unexportall/exports\n"
+              "       gpio export/edge/unexport ...\n"
+        //      "       gpio wfi <pin> <mode>\n"
+        //    "       gpio drive <group> <value>\n"
+        //      "       gpio pwm-bal/pwm-ms \n"
+              "       gpio pwmr <range> \n"
+              "       gpio pwmc <divider> \n"
+              "       gpio load spi/i2c\n"
+              "       gpio unload spi/i2c\n"
+              "       gpio i2cd/i2cdetect\n";
+        //      "       gpio usbp high/low\n"
+        //      "       gpio gbr <channel>\n"
+          //    "       gpio gbw <channel> <value>" ;        // No trailing newline needed here.
 
 
-#ifdef	NOT_FOR_NOW
+#ifdef        NOT_FOR_NOW
 /*
  * decodePin:
- *	Decode a pin "number" which can actually be a pin name to represent
- *	one of the Pi's on-board pins.
+ *        Decode a pin "number" which can actually be a pin name to represent
+ *        one of the Pi's on-board pins.
  *********************************************************************************
  */
 
@@ -103,8 +103,8 @@ static int decodePin (const char *str)
 
 /*
  * changeOwner:
- *	Change the ownership of the file to the real userId of the calling
- *	program so we can access it.
+ *        Change the ownership of the file to the real userId of the calling
+ *        program so we can access it.
  *********************************************************************************
  */
 
@@ -115,7 +115,7 @@ static void changeOwner (char *cmd, char *file)
 
   if (chown (file, uid, gid) != 0)
   {
-    if (errno == ENOENT)	// Warn that it's not there
+    if (errno == ENOENT)        // Warn that it's not there
       fprintf (stderr, "%s: Warning (not an error, do not report): File not present: %s\n", cmd, file) ;
     else
       fprintf (stderr, "%s: Warning (not an error): Unable to change ownership of %s: %s\n", cmd, file, strerror (errno)) ;
@@ -125,7 +125,7 @@ static void changeOwner (char *cmd, char *file)
 
 /*
  * moduleLoaded:
- *	Return true/false if the supplied module is loaded
+ *        Return true/false if the supplied module is loaded
  *********************************************************************************
  */
 
@@ -159,7 +159,7 @@ static int moduleLoaded (char *modName)
 
 /*
  * doLoad:
- *	Load either the spi or i2c modules and change device ownerships, etc.
+ *        Load either the spi or i2c modules and change device ownerships, etc.
  *********************************************************************************
  */
 
@@ -167,7 +167,7 @@ static void checkDevTree (char *argv [])
 {
   struct stat statBuf ;
 
-  if (stat ("/proc/device-tree", &statBuf) == 0)	// We're on a devtree system ...
+  if (stat ("/proc/device-tree", &statBuf) == 0)        // We're on a devtree system ...
   {
     fprintf (stderr,
 "%s: Unable to load/unload modules as this Pi has the device tree enabled.\n"
@@ -187,77 +187,77 @@ static void _doLoadUsage (char *argv [])
 
 static void doLoad (int argc, char *argv [])
 {
-	char *module1, *module2 ;
-	char cmd [80] ;
-	char *file1, *file2 ;
-	char args1 [32], args2 [32] ;
-	//checkDevTree (argv) ;
-	if (argc < 3)
-		_doLoadUsage (argv) ;
-	args1 [0] = args2 [0] = 0 ;
-	if (strcasecmp (argv [2], "spi") == 0)
-   	{
-		module1 = "spidev" ;
-		#ifdef TINKER_BOARD
-		module2 = "spi0_rockchip" ;
-		file1  = "/dev/spidev2.0" ;
-		file2  = "/dev/spidev2.1" ;
-		#else
-		module2 = "spi_bcm2708" ;
-		file1  = "/dev/spidev0.0" ;
-		file2  = "/dev/spidev0.1" ;
-		#endif
-		if (argc == 4)
-   		{
-			fprintf (stderr, "%s: Unable to set the buffer size now. Load aborted. Please see the man page.\n", argv [0]) ;
-			exit (1) ;
-    	}
-    	else if (argc > 4)
-			_doLoadUsage (argv) ;
-   	}
-	else if (strcasecmp (argv [2], "i2c") == 0)
-	{
-		module1 = "i2c_dev" ;
-		#ifdef TINKER_BOARD
-		module2 = "i2c_rk3x_i2c1" ;
-		file1  = "/dev/i2c-1" ;
-		file2  = "/dev/i2c-4" ;
-		#else
-		module2 = "i2c_bcm2708" ;
-      	file1  = "/dev/i2c-0" ;
-      	file2  = "/dev/i2c-1" ;
-		#endif
-		if (argc == 4)
-			sprintf (args2, " baudrate=%d", atoi (argv [3]) * 1000) ;
-		else if (argc > 4)
-			_doLoadUsage (argv) ;
+        char *module1, *module2 ;
+        char cmd [80] ;
+        char *file1, *file2 ;
+        char args1 [32], args2 [32] ;
+        //checkDevTree (argv) ;
+        if (argc < 3)
+                _doLoadUsage (argv) ;
+        args1 [0] = args2 [0] = 0 ;
+        if (strcasecmp (argv [2], "spi") == 0)
+           {
+                module1 = "spidev" ;
+                #ifdef TINKER_BOARD
+                module2 = "spi0_rockchip" ;
+                file1  = "/dev/spidev2.0" ;
+                file2  = "/dev/spidev2.1" ;
+                #else
+                module2 = "spi_bcm2708" ;
+                file1  = "/dev/spidev0.0" ;
+                file2  = "/dev/spidev0.1" ;
+                #endif
+                if (argc == 4)
+                   {
+                        fprintf (stderr, "%s: Unable to set the buffer size now. Load aborted. Please see the man page.\n", argv [0]) ;
+                        exit (1) ;
+            }
+            else if (argc > 4)
+                        _doLoadUsage (argv) ;
+           }
+        else if (strcasecmp (argv [2], "i2c") == 0)
+        {
+                module1 = "i2c_dev" ;
+                #ifdef TINKER_BOARD
+                module2 = "i2c_rk3x_i2c1" ;
+                file1  = "/dev/i2c-1" ;
+                file2  = "/dev/i2c-4" ;
+                #else
+                module2 = "i2c_bcm2708" ;
+              file1  = "/dev/i2c-0" ;
+              file2  = "/dev/i2c-1" ;
+                #endif
+                if (argc == 4)
+                        sprintf (args2, " baudrate=%d", atoi (argv [3]) * 1000) ;
+                else if (argc > 4)
+                        _doLoadUsage (argv) ;
     }
     else
-		_doLoadUsage (argv) ;
-	if (!moduleLoaded (module1))
-	{
-		sprintf (cmd, "/sbin/modprobe %s%s", module1, args1) ;
-		system (cmd) ;
-	}
-	if (!moduleLoaded (module2))
-	{
-		sprintf (cmd, "/sbin/modprobe %s%s", module2, args2) ;
-		system (cmd) ;
-	}
-	if (!moduleLoaded (module2))
-	{
-		fprintf (stderr, "%s: Unable to load %s\n", argv [0], module2) ;
-		exit (1) ;
-	}
-	sleep (1) ;	// To let things get settled
-	changeOwner (argv [0], file1) ;
-	changeOwner (argv [0], file2) ;
+                _doLoadUsage (argv) ;
+        if (!moduleLoaded (module1))
+        {
+                sprintf (cmd, "/sbin/modprobe %s%s", module1, args1) ;
+                system (cmd) ;
+        }
+        if (!moduleLoaded (module2))
+        {
+                sprintf (cmd, "/sbin/modprobe %s%s", module2, args2) ;
+                system (cmd) ;
+        }
+        if (!moduleLoaded (module2))
+        {
+                fprintf (stderr, "%s: Unable to load %s\n", argv [0], module2) ;
+                exit (1) ;
+        }
+        sleep (1) ;        // To let things get settled
+        changeOwner (argv [0], file1) ;
+        changeOwner (argv [0], file2) ;
 }
 
 
 /*
  * doUnLoad:
- *	Un-Load either the spi or i2c modules and change device ownerships, etc.
+ *        Un-Load either the spi or i2c modules and change device ownerships, etc.
  *********************************************************************************
  */
 
@@ -269,47 +269,47 @@ static void _doUnLoadUsage (char *argv [])
 
 static void doUnLoad (int argc, char *argv [])
 {
-	char *module1, *module2 ;
-	char cmd [80] ;
-	checkDevTree (argv) ;
-	if (argc != 3)
-		_doUnLoadUsage (argv) ;
-	if (strcasecmp (argv [2], "spi") == 0)
-	{
-		module1 = "spidev" ;
-		#ifdef TINKER_BOARD
-		module2 = "spi0_rockchip" ;
-		#else
-		module2 = "spi_bcm2708" ;
-		#endif
-	}
-	else if (strcasecmp (argv [2], "i2c") == 0)
-	{
-		module1 = "i2c_dev" ;
-		#ifdef TINKER_BOARD
-		module2 = "i2c_rk3x_i2c1" ;
-		#else
-		module2 = "i2c_bcm2708" ;
-		#endif
-	}
-	else
-		_doUnLoadUsage (argv) ;
-	if (moduleLoaded (module1))
-	{
-		sprintf (cmd, "/sbin/rmmod %s", module1) ;
-		system (cmd) ;
-	}
-	if (moduleLoaded (module2))
-	{
-		sprintf (cmd, "/sbin/rmmod %s", module2) ;
-		system (cmd) ;
-	}
+        char *module1, *module2 ;
+        char cmd [80] ;
+        checkDevTree (argv) ;
+        if (argc != 3)
+                _doUnLoadUsage (argv) ;
+        if (strcasecmp (argv [2], "spi") == 0)
+        {
+                module1 = "spidev" ;
+                #ifdef TINKER_BOARD
+                module2 = "spi0_rockchip" ;
+                #else
+                module2 = "spi_bcm2708" ;
+                #endif
+        }
+        else if (strcasecmp (argv [2], "i2c") == 0)
+        {
+                module1 = "i2c_dev" ;
+                #ifdef TINKER_BOARD
+                module2 = "i2c_rk3x_i2c1" ;
+                #else
+                module2 = "i2c_bcm2708" ;
+                #endif
+        }
+        else
+                _doUnLoadUsage (argv) ;
+        if (moduleLoaded (module1))
+        {
+                sprintf (cmd, "/sbin/rmmod %s", module1) ;
+                system (cmd) ;
+        }
+        if (moduleLoaded (module2))
+        {
+                sprintf (cmd, "/sbin/rmmod %s", module2) ;
+                system (cmd) ;
+        }
 }
 
 
 /*
  * doI2Cdetect:
- *	Run the i2cdetect command with the right runes for this Pi revision
+ *        Run the i2cdetect command with the right runes for this Pi revision
  *********************************************************************************
  */
 
@@ -340,7 +340,7 @@ static void doI2Cdetect (int argc, char *argv [])
 
 /*
  * doExports:
- *	List all GPIO exports
+ *        List all GPIO exports
  *********************************************************************************
  */
 
@@ -351,7 +351,7 @@ static void doExports (int argc, char *argv [])
   char fName [128] ;
   char buf [16] ;
 
-  for (first = 0, i = 0 ; i < 64 ; ++i)	// Crude, but effective
+  for (first = 0, i = 0 ; i < 64 ; ++i)        // Crude, but effective
   {
 
 // Try to read the direction
@@ -422,8 +422,8 @@ static void doExports (int argc, char *argv [])
 
 /*
  * doExport:
- *	gpio export pin mode
- *	This uses the /sys/class/gpio device interface.
+ *        gpio export pin mode
+ *        This uses the /sys/class/gpio device interface.
  *********************************************************************************
  */
 
@@ -489,11 +489,11 @@ void doExport (int argc, char *argv [])
 
 /*
  * doWfi:
- *	gpio wfi pin mode
- *	Wait for Interrupt on a given pin.
- *	Slight cheat here - it's easier to actually use ISR now (which calls
- *	gpio to set the pin modes!) then we simply sleep, and expect the thread
- *	to exit the program. Crude but effective.
+ *        gpio wfi pin mode
+ *        Wait for Interrupt on a given pin.
+ *        Slight cheat here - it's easier to actually use ISR now (which calls
+ *        gpio to set the pin modes!) then we simply sleep, and expect the thread
+ *        to exit the program. Crude but effective.
  *********************************************************************************
  */
 
@@ -535,9 +535,9 @@ void doWfi (int argc, char *argv [])
 
 /*
  * doEdge:
- *	gpio edge pin mode
- *	Easy access to changing the edge trigger on a GPIO pin
- *	This uses the /sys/class/gpio device interface.
+ *        gpio edge pin mode
+ *        Easy access to changing the edge trigger on a GPIO pin
+ *        This uses the /sys/class/gpio device interface.
  *********************************************************************************
  */
 
@@ -609,8 +609,8 @@ void doEdge (int argc, char *argv [])
 
 /*
  * doUnexport:
- *	gpio unexport pin
- *	This uses the /sys/class/gpio device interface.
+ *        gpio unexport pin
+ *        This uses the /sys/class/gpio device interface.
  *********************************************************************************
  */
 
@@ -640,9 +640,9 @@ void doUnexport (int argc, char *argv [])
 
 /*
  * doUnexportAll:
- *	gpio unexportall
- *	Un-Export all the GPIO pins.
- *	This uses the /sys/class/gpio device interface.
+ *        gpio unexportall
+ *        Un-Export all the GPIO pins.
+ *        This uses the /sys/class/gpio device interface.
  *********************************************************************************
  */
 
@@ -666,7 +666,7 @@ void doUnexportall (char *progName)
 
 /*
  * doReset:
- *	Reset the GPIO pins - as much as we can do
+ *        Reset the GPIO pins - as much as we can do
  *********************************************************************************
  */
 
@@ -680,7 +680,7 @@ static void doReset (char *progName)
 
 /*
  * doMode:
- *	gpio mode pin mode ...
+ *        gpio mode pin mode ...
  *********************************************************************************
  */
 
@@ -726,7 +726,7 @@ void doMode (int argc, char *argv [])
 
 /*
  * doPadDrive:
- *	gpio drive group value
+ *        gpio drive group value
  *********************************************************************************
  */
 
@@ -761,8 +761,8 @@ static void doPadDrive (int argc, char *argv [])
 
 /*
  * doUsbP:
- *	Control USB Power - High (1.2A) or Low (600mA)
- *	gpio usbp high/low
+ *        Control USB Power - High (1.2A) or Low (600mA)
+ *        gpio usbp high/low
  *********************************************************************************
  */
 
@@ -813,8 +813,8 @@ static void doUsbP (int argc, char *argv [])
 
 /*
  * doGbw:
- *	gpio gbw channel value
- *	Gertboard Write - To the Analog output
+ *        gpio gbw channel value
+ *        Gertboard Write - To the Analog output
  *********************************************************************************
  */
 
@@ -855,8 +855,8 @@ static void doGbw (int argc, char *argv [])
 
 /*
  * doGbr:
- *	gpio gbr channel
- *	From the analog input
+ *        gpio gbr channel
+ *        From the analog input
  *********************************************************************************
  */
 
@@ -890,7 +890,7 @@ static void doGbr (int argc, char *argv [])
 
 /*
  * doWrite:
- *	gpio write pin value
+ *        gpio write pin value
  *********************************************************************************
  */
 
@@ -922,7 +922,7 @@ static void doWrite (int argc, char *argv [])
 
 /*
  * doAwriterite:
- *	gpio awrite pin value
+ *        gpio awrite pin value
  *********************************************************************************
  */
 
@@ -946,7 +946,7 @@ static void doAwrite (int argc, char *argv [])
 
 /*
  * doWriteByte:
- *	gpio write value
+ *        gpio write value
  *********************************************************************************
  */
 
@@ -968,7 +968,7 @@ static void doWriteByte (int argc, char *argv [])
 
 /*
  * doRead:
- *	Read a pin and return the value
+ *        Read a pin and return the value
  *********************************************************************************
  */
 
@@ -991,7 +991,7 @@ void doRead (int argc, char *argv [])
 
 /*
  * doAread:
- *	Read an analog pin and return the value
+ *        Read an analog pin and return the value
  *********************************************************************************
  */
 
@@ -1009,7 +1009,7 @@ void doAread (int argc, char *argv [])
 
 /*
  * doToggle:
- *	Toggle an IO pin
+ *        Toggle an IO pin
  *********************************************************************************
  */
 
@@ -1031,7 +1031,7 @@ void doToggle (int argc, char *argv [])
 
 /*
  * doPwmTone:
- *	Output a tone in a PWM pin
+ *        Output a tone in a PWM pin
  *********************************************************************************
  */
 
@@ -1054,7 +1054,7 @@ void doPwmTone (int argc, char *argv [])
 
 /*
  * doClock:
- *	Output a clock on a pin
+ *        Output a clock on a pin
  *********************************************************************************
  */
 
@@ -1078,7 +1078,7 @@ void doClock (int argc, char *argv [])
 
 /*
  * doPwm:
- *	Output a PWM value on a pin
+ *        Output a PWM value on a pin
  *********************************************************************************
  */
 
@@ -1102,7 +1102,7 @@ void doPwm (int argc, char *argv [])
 
 /*
  * doPwmMode: doPwmRange: doPwmClock:
- *	Change the PWM mode, range and clock divider values
+ *        Change the PWM mode, range and clock divider values
  *********************************************************************************
  */
 
@@ -1156,7 +1156,7 @@ static void doPwmClock (int argc, char *argv [])
 
 /*
  * doVersion:
- *	Handle the ever more complicated version command
+ *        Handle the ever more complicated version command
  *********************************************************************************
  */
 
@@ -1183,24 +1183,24 @@ static void doVersion (char *argv [])
 ***************/
   if(model == PI_MODEL_TB)
   {
-	printf ("TinkerBoard Details:\n") ;
-    	printf ("  Type: %s, Revision: %s, Memory: %dMB, Maker: %s %s\n", 
-	piModelNames [model], piRevisionNames [rev], piMemorySize [mem], piMakerNames [maker], warranty ? "[Out of Warranty]" : "") ;
-	
+        printf ("TinkerBoard Details:\n") ;
+            printf ("  Type: %s, Revision: %s, Memory: %dMB, Maker: %s %s\n", 
+        piModelNames [model], piRevisionNames [rev], piMemorySize [mem], piMakerNames [maker], warranty ? "[Out of Warranty]" : "") ;
+        
 
   }//if(model == PI_MODEL_TB)
   else
   {
     printf ("Raspberry Pi Details:\n") ;
     printf ("  Type: %s, Revision: %s, Memory: %dMB, Maker: %s %s\n", 
-	piModelNames [model], piRevisionNames [rev], piMemorySize [mem], piMakerNames [maker], warranty ? "[Out of Warranty]" : "") ;
+        piModelNames [model], piRevisionNames [rev], piMemorySize [mem], piMakerNames [maker], warranty ? "[Out of Warranty]" : "") ;
 
 // Check for device tree
 
-    if (stat ("/proc/device-tree", &statBuf) == 0)	// We're on a devtree system ...
+    if (stat ("/proc/device-tree", &statBuf) == 0)        // We're on a devtree system ...
       printf ("  Device tree is enabled.\n") ;
 
-    if (stat ("/dev/gpiomem", &statBuf) == 0)		// User level GPIO is GO
+    if (stat ("/dev/gpiomem", &statBuf) == 0)                // User level GPIO is GO
     {
       printf ("  This Raspberry Pi supports user-level GPIO access.\n") ;
       printf ("    -> See the man-page for more details\n") ;
@@ -1214,7 +1214,7 @@ static void doVersion (char *argv [])
 
 /*
  * main:
- *	Start here
+ *        Start here
  *********************************************************************************
  */
 
@@ -1242,7 +1242,7 @@ int main (int argc, char *argv [])
   }
 
 // Version & Warranty
-//	Wish I could remember why I have both -R and -V ...
+//        Wish I could remember why I have both -R and -V ...
 
   if ((strcmp (argv [1], "-R") == 0) || (strcmp (argv [1], "-V") == 0))
   {
@@ -1254,7 +1254,7 @@ int main (int argc, char *argv [])
 
   if (strcmp (argv [1], "-v") == 0)
   {
-	  doVersion (argv) ;
+          doVersion (argv) ;
     return 0 ;
   }
 
@@ -1287,21 +1287,21 @@ int main (int argc, char *argv [])
 
 // Initial test for /sys/class/gpio operations:
 
-  /**/ if (strcasecmp (argv [1], "exports"    ) == 0)	{ doExports     (argc, argv) ;	return 0 ; }
-  else if (strcasecmp (argv [1], "export"     ) == 0)	{ doExport      (argc, argv) ;	return 0 ; }
-  else if (strcasecmp (argv [1], "edge"       ) == 0)	{ doEdge        (argc, argv) ;	return 0 ; }
-  else if (strcasecmp (argv [1], "unexport"   ) == 0)	{ doUnexport    (argc, argv) ;	return 0 ; }
-  else if (strcasecmp (argv [1], "unexportall") == 0)	{ doUnexportall (argv [0]) ;	return 0 ; }
+  /**/ if (strcasecmp (argv [1], "exports"    ) == 0)        { doExports     (argc, argv) ;        return 0 ; }
+  else if (strcasecmp (argv [1], "export"     ) == 0)        { doExport      (argc, argv) ;        return 0 ; }
+  else if (strcasecmp (argv [1], "edge"       ) == 0)        { doEdge        (argc, argv) ;        return 0 ; }
+  else if (strcasecmp (argv [1], "unexport"   ) == 0)        { doUnexport    (argc, argv) ;        return 0 ; }
+  else if (strcasecmp (argv [1], "unexportall") == 0)        { doUnexportall (argv [0]) ;        return 0 ; }
 
 // Check for load command:
 
-  if (strcasecmp (argv [1], "load"   ) == 0)	{ doLoad   (argc, argv) ; return 0 ; }
-  if (strcasecmp (argv [1], "unload" ) == 0)	{ doUnLoad (argc, argv) ; return 0 ; }
+  if (strcasecmp (argv [1], "load"   ) == 0)        { doLoad   (argc, argv) ; return 0 ; }
+  if (strcasecmp (argv [1], "unload" ) == 0)        { doUnLoad (argc, argv) ; return 0 ; }
 
 // Gertboard commands
 
-  if (strcasecmp (argv [1], "gbr" ) == 0)	{ doGbr (argc, argv) ; return 0 ; }
-  if (strcasecmp (argv [1], "gbw" ) == 0)	{ doGbw (argc, argv) ; return 0 ; }
+  if (strcasecmp (argv [1], "gbr" ) == 0)        { doGbr (argc, argv) ; return 0 ; }
+  if (strcasecmp (argv [1], "gbw" ) == 0)        { doGbw (argc, argv) ; return 0 ; }
 
 // Check for -g argument
 
@@ -1357,7 +1357,7 @@ int main (int argc, char *argv [])
       exit (EXIT_FAILURE) ;
     }
 
-    if (!loadWPiExtension (argv [0], argv [2], TRUE))	// Prints its own error messages
+    if (!loadWPiExtension (argv [0], argv [2], TRUE))        // Prints its own error messages
       exit (EXIT_FAILURE) ;
 
     for (i = 3 ; i < argc ; ++i)
