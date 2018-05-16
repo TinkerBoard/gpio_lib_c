@@ -2203,6 +2203,10 @@ int wiringPiSetup (void)
 		wiringPiMode = WPI_MODE_GPIO ;
 	else
 		wiringPiMode = WPI_MODE_PINS ;
+	#ifdef TINKER_BOARD
+	gpio_clk_enable();
+	#endif
+
 	return 0 ;
 }
 

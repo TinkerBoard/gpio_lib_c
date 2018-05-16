@@ -333,7 +333,7 @@ int gpio_is_valid(int gpio)
                         return 0;
         }
 }
-
+#if 0
 int gpio_clk_disable(int gpio)
 {
         int bank, bank_clk_en;
@@ -345,6 +345,7 @@ int gpio_clk_disable(int gpio)
         *(cru+reg_offset/4) = (*(cru+reg_offset/4) & ~(0x1 << write_bit)) | (0x1 << (16 + write_bit));
         return bank_clk_en;
 }
+
 void gpio_clk_recovery(int gpio, int flag)
 {
         int bank;
@@ -354,14 +355,25 @@ void gpio_clk_recovery(int gpio, int flag)
         reg_offset = (bank != 0) ? CRU_CLKGATE14_CON : CRU_CLKGATE17_CON;
         *(cru+reg_offset/4) = (*(cru+reg_offset/4) | (flag << write_bit)) | (0x1 << (16 + write_bit));
 }
+#else
+void gpio_clk_enable(void)
+{
+        int write_bit, reg_offset;
+        //bank = gpioToBank(gpio);
+        for(int bank = 0 ; bank <= 8 ; bank++){
+                write_bit = (bank != 0) ? bank : 4;
+                reg_offset = (bank != 0) ? CRU_CLKGATE14_CON : CRU_CLKGATE17_CON;
+                *(cru+reg_offset/4) = (*(cru+reg_offset/4) & ~(0x1 << write_bit)) | (0x1 << (16 + write_bit));
+        }
+}
+#endif
 int asus_get_pin_mode(int pin)
 {
         int value, func;
-        int bank_clk_en;
         int bank, bank_pin;
         bank = gpioToBank(pin);
         bank_pin = gpioToBankPin(pin);
-        bank_clk_en = gpio_clk_disable(pin);
+
         switch(pin)
         {
                 //GPIO0
@@ -570,7 +582,6 @@ int asus_get_pin_mode(int pin)
                         func = INPUT;
         }
         //printf("\nget_pin_mode: pin=%d, value=%x, func=%x\n",pin, value, func);
-        gpio_clk_recovery(pin, bank_clk_en);
         return func;
 }
 
@@ -663,13 +674,12 @@ void asus_set_pinmode_as_gpio(int pin)
 
 void asus_set_pin_mode(int pin, int mode)
 {
-        int bank_clk_en;
         int bank, bank_pin;
         if(!gpio_is_valid(pin))
                 return;
         bank = gpioToBank(pin);
         bank_pin = gpioToBankPin(pin);
-        bank_clk_en = gpio_clk_disable(pin);
+
         if(INPUT == mode)
         {
                 asus_set_pinmode_as_gpio(pin);
@@ -705,39 +715,57 @@ void asus_set_pin_mode(int pin, int mode)
                 else
                         printf("This pin cannot set as gpio clock\n");
         }
-        gpio_clk_recovery(pin, bank_clk_en);
 }
 
 void asus_digitalWrite(int pin, int value)
 {
-        int bank_clk_en;
         int bank, bank_pin;
+        int op=0;
+        volatile unsigned* addr;
         if(!gpio_is_valid(pin))
                 return;
         bank = gpioToBank(pin);
         bank_pin = gpioToBankPin(pin);
-        bank_clk_en = gpio_clk_disable(pin);
+
+        addr=gpio0[bank]+GPIO_SWPORTA_DR_OFFSET/4;
         if(value > 0)
         {
-                *(gpio0[bank]+GPIO_SWPORTA_DR_OFFSET/4) |= (1<<bank_pin);
+                //*(gpio0[bank]+GPIO_SWPORTA_DR_OFFSET/4) |= (1<<bank_pin);
+                op=(1<<bank_pin);
+                __asm__ volatile(
+                "mov r0,%0\n\t"
+                "mov r1,%1\n\t"
+                "orr r0,r1\n\t"
+                "str r0,[%0]\n\t"
+                :
+                :"r" (addr),"r" (op)
+                :"r0","r1"
+                );
         }
         else
         {
-                *(gpio0[bank]+GPIO_SWPORTA_DR_OFFSET/4) &= ~(1<<bank_pin);
+                //*(gpio0[bank]+GPIO_SWPORTA_DR_OFFSET/4) &= ~(1<<bank_pin);
+                op=~(1<<bank_pin);
+                __asm__ volatile( 
+                "mov r0,%0\n\t"
+                "mov r1,%1\n\t"
+                "and r0,r1\n\t"
+                "str r0,[%0]\n\t"
+                :
+                :"r" (addr),"r" (op)
+                :"r0","r1"
+                );
         }
-        gpio_clk_recovery(pin, bank_clk_en);
 }
 
 int asus_digitalRead(int pin)
 {
         int value;
-        int bank_clk_en;
         int bank, bank_pin;
         bank = gpioToBank(pin);
         bank_pin = gpioToBankPin(pin);
-        bank_clk_en = gpio_clk_disable(pin);
+
         value = (((*(gpio0[bank]+GPIO_EXT_PORTA_OFFSET/4)) & (1 << bank_pin)) >> bank_pin);
-        gpio_clk_recovery(pin, bank_clk_en);
         return value;
 }
 
@@ -976,11 +1004,9 @@ void asus_set_gpioClockFreq(int pin, int freq)
 int asus_get_pinAlt(int pin)
 {
         int alt;
-        int bank_clk_en;
         int bank, bank_pin;
         bank = gpioToBank(pin);
         bank_pin = gpioToBankPin(pin);
-        bank_clk_en = gpio_clk_disable(pin);
         switch(pin)
         {
                 //GPIO0
@@ -1078,7 +1104,6 @@ int asus_get_pinAlt(int pin)
                 else
                         alt = FSEL_INPT;
     }
-        gpio_clk_recovery(pin, bank_clk_en);
         return alt;
 }
 
@@ -1170,7 +1195,6 @@ void SetGpioMode(int pin, int alt)
 
 void asus_set_pinAlt(int pin, int alt)
 {
-        int bank_clk_en;
         int bank, bank_pin;
         int tb_format_alt;
         if(!gpio_is_valid(pin))
@@ -1183,7 +1207,6 @@ void asus_set_pinAlt(int pin, int alt)
                 printf("wrong alt\n");
                 return;
         }
-        bank_clk_en = gpio_clk_disable(pin);
         SetGpioMode(pin, tb_format_alt);
         if(alt == FSEL_INPT)
         {
@@ -1193,7 +1216,6 @@ void asus_set_pinAlt(int pin, int alt)
         {
                 *(gpio0[bank]+GPIO_SWPORTA_DDR_OFFSET/4) |= (1<<bank_pin);
         }
-        gpio_clk_recovery(pin, bank_clk_en);
 }
 
 
