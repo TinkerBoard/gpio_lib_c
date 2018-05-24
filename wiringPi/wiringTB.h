@@ -24,4 +24,5 @@ void asus_set_pinAlt             (int pin, int alt);
 void asus_set_GpioDriveStrength  (int pin, int drv_type);
 int  asus_get_GpioDriveStrength  (int pin);
 void asus_cleanup                (void);
+void gpio_clk_enable             (void);
 #endif

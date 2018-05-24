@@ -730,6 +730,12 @@ void asus_digitalWrite(int pin, int value)
         addr=gpio0[bank]+GPIO_SWPORTA_DR_OFFSET/4;
         if(value > 0)
         {
+	    if(bank == 0)
+	    {
+		*addr |= (1<<bank_pin);
+	    }
+	    else
+	    {
                 //*(gpio0[bank]+GPIO_SWPORTA_DR_OFFSET/4) |= (1<<bank_pin);
                 op=(1<<bank_pin);
                 __asm__ volatile(
@@ -741,9 +747,16 @@ void asus_digitalWrite(int pin, int value)
                 :"r" (addr),"r" (op)
                 :"r0","r1"
                 );
+	    }
         }
         else
         {
+	    if(bank == 0)
+	    {
+		*addr &= ~(1<<bank_pin);
+	    }
+	    else
+	    {
                 //*(gpio0[bank]+GPIO_SWPORTA_DR_OFFSET/4) &= ~(1<<bank_pin);
                 op=~(1<<bank_pin);
                 __asm__ volatile( 
@@ -755,6 +768,7 @@ void asus_digitalWrite(int pin, int value)
                 :"r" (addr),"r" (op)
                 :"r0","r1"
                 );
+	    }
         }
 }
 
