@@ -730,45 +730,31 @@ void asus_digitalWrite(int pin, int value)
         addr=gpio0[bank]+GPIO_SWPORTA_DR_OFFSET/4;
         if(value > 0)
         {
-	    if(bank == 0)
-	    {
-		*addr |= (1<<bank_pin);
-	    }
-	    else
-	    {
                 //*(gpio0[bank]+GPIO_SWPORTA_DR_OFFSET/4) |= (1<<bank_pin);
                 op=(1<<bank_pin);
                 __asm__ volatile(
-                "mov r0,%0\n\t"
-                "mov r1,%1\n\t"
+                "ldr r0,[%0]\n\t"
+                "ldr r1,[%1]\n\t"
                 "orr r0,r1\n\t"
                 "str r0,[%0]\n\t"
-                :
-                :"r" (addr),"r" (op)
-                :"r0","r1"
+                :"+r" (addr)
+                :"r" (&op)
+                :"r0","r1","memory"
                 );
-	    }
         }
         else
         {
-	    if(bank == 0)
-	    {
-		*addr &= ~(1<<bank_pin);
-	    }
-	    else
-	    {
                 //*(gpio0[bank]+GPIO_SWPORTA_DR_OFFSET/4) &= ~(1<<bank_pin);
                 op=~(1<<bank_pin);
-                __asm__ volatile( 
-                "mov r0,%0\n\t"
-                "mov r1,%1\n\t"
+                __asm__ volatile(
+                "ldr r0,[%0]\n\t"
+                "ldr r1,[%1]\n\t"
                 "and r0,r1\n\t"
                 "str r0,[%0]\n\t"
-                :
-                :"r" (addr),"r" (op)
-                :"r0","r1"
+                :"+r" (addr)
+                :"r" (&op)
+                :"r0","r1","memory"
                 );
-	    }
         }
 }
 
